@@ -1,0 +1,16 @@
+services:
+  frontend:
+    build: .
+    container_name: frontened_P1
+    command: ng serve --host 0.0.0.0 --port 4200
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    ports:
+      - "4200:4200"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    # depends_on:
+    #   - backend
+
+  
