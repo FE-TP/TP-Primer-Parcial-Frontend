@@ -1,8 +1,9 @@
 services:
   frontend:
     build: .
-    container_name: frontened_P1
-    command: ng serve --host 0.0.0.0 --port 4200
+    container_name: frontend_P1
+    command: tail -f /dev/null
+    hostname: frontend
     volumes:
       - ./:/app
       - /app/node_modules
