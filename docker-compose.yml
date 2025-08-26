@@ -1,18 +1,24 @@
 services:
   frontend:
     build: .
-    container_name: frontend_P1
-    ## levanta el servidor
-    command: ng serve --host 0.0.0.0 --port 4200
+    container_name: frontend_FE_P1
+    command: ng serve --host 0.0.0.0
     hostname: frontend
     volumes:
-      - ./:/app
+      - ./Frontend:/app
       - /app/node_modules
     ports:
       - "4200:4200"
     environment:
       - CHOKIDAR_USEPOLLING=true
-    # depends_on:
-    #   - backend
+    depends_on:
+      - backend
 
-  
+  backend:
+    image: clue/json-server
+    container_name: backend_FE_P1
+    hostname: backend
+    ports:
+      - "3000:80"
+    volumes:
+      - ./Backend/db.json:/data/db.json
