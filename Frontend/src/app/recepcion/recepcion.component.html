@@ -1,0 +1,237 @@
+<!-- Encabezado del módulo -->
+<div class="header-container">
+  <h1 class="page-title">Módulo de Ejecución de Recepción de Productos</h1>
+  
+  <!-- Selector de fecha -->
+  <div class="date-selector">
+    <label for="fecha">Fecha de consulta:</label>
+    <input 
+      type="date" 
+      id="fecha" 
+      [(ngModel)]="fechaSeleccionada" 
+      (change)="onFechaChange()"
+      class="form-control"
+    >
+  </div>
+</div>
+
+<!-- Tabla de turnos -->
+<div class="turnos-container">
+  <h2>Turnos para {{ fechaSeleccionada | date:'dd/MM/yyyy' }}</h2>
+  
+  <div class="table-container" *ngIf="turnos.length > 0; else noTurnos">
+    <table class="turnos-table">
+      <thead>
+        <tr>
+          <th>Turno #</th>
+          <th>Hora Agendamiento</th>
+          <th>Proveedor</th>
+          <th>Total Productos</th>
+          <th>Estado</th>
+          <th>Jaula Asignada</th>
+          <th>Hora Inicio Recepción</th>
+          <th>Hora Fin Recepción</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let turno of turnos">
+          <td>{{ turno.idTurno }}</td>
+          <td>{{ turno.horaInicioAgendamiento }} - {{ turno.horaFinAgendamiento }}</td>
+          <td>{{ turno.proveedor?.nombre || 'N/A' }}</td>
+          <td>{{ getTotalProductos(turno.detalles) }}</td>
+          <td>
+            <span [class]="'badge ' + getEstadoBadgeClass(turno.estado)">
+              {{ turno.estado }}
+            </span>
+          </td>
+          <td>{{ turno.jaula?.nombre || '-' }}</td>
+          <td>{{ turno.horaInicioRecepcion || '-' }}</td>
+          <td>{{ turno.horaFinRecepcion || '-' }}</td>
+          <td class="actions-cell">
+            <button 
+              class="btn btn-primary btn-sm" 
+              (click)="verDetalles(turno)"
+              title="Ver detalles del turno"
+            >
+              Ver Detalles
+            </button>
+            
+            <button 
+              *ngIf="turno.estado === 'AGENDADO'" 
+              class="btn btn-success btn-sm" 
+              (click)="abrirModalJaula(turno)"
+              title="Iniciar recepción"
+            >
+              Iniciar
+            </button>
+            
+            <button 
+              *ngIf="turno.estado === 'EN_RECEPCION'" 
+              class="btn btn-warning btn-sm" 
+              (click)="finalizarRecepcion(turno)"
+              title="Finalizar recepción"
+            >
+              Finalizar
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <ng-template #noTurnos>
+    <div class="no-data">
+      <p>No hay turnos programados para la fecha seleccionada.</p>
+    </div>
+  </ng-template>
+</div>
+
+<!-- Modal de detalles del turno -->
+<div class="modal-overlay" *ngIf="mostrarDetalles" (click)="cerrarDetalles()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Detalles del Turno #{{ turnoSeleccionado?.idTurno }}</h3>
+      <button class="btn-close" (click)="cerrarDetalles()">&times;</button>
+    </div>
+    
+    <div class="modal-body" *ngIf="turnoSeleccionado">
+      <!-- Información general del turno -->
+      <div class="turno-info">
+        <div class="info-grid">
+          <div class="info-item">
+            <strong>Proveedor:</strong>
+            <span>{{ turnoSeleccionado.proveedor?.nombre }}</span>
+          </div>
+          <div class="info-item">
+            <strong>Fecha:</strong>
+            <span>{{ turnoSeleccionado.fecha | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <div class="info-item">
+            <strong>Hora Agendamiento:</strong>
+            <span>{{ turnoSeleccionado.horaInicioAgendamiento }} - {{ turnoSeleccionado.horaFinAgendamiento }}</span>
+          </div>
+          <div class="info-item">
+            <strong>Estado:</strong>
+            <span [class]="'badge ' + getEstadoBadgeClass(turnoSeleccionado.estado)">
+              {{ turnoSeleccionado.estado }}
+            </span>
+          </div>
+          <div class="info-item" *ngIf="turnoSeleccionado.jaula">
+            <strong>Jaula:</strong>
+            <span>{{ turnoSeleccionado.jaula.nombre }}</span>
+          </div>
+          <div class="info-item" *ngIf="turnoSeleccionado.horaInicioRecepcion">
+            <strong>Inicio Recepción:</strong>
+            <span>{{ turnoSeleccionado.horaInicioRecepcion }}</span>
+          </div>
+          <div class="info-item" *ngIf="turnoSeleccionado.horaFinRecepcion">
+            <strong>Fin Recepción:</strong>
+            <span>{{ turnoSeleccionado.horaFinRecepcion }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detalles de productos -->
+      <div class="productos-section">
+        <h4>Productos a Recibir:</h4>
+        <table class="productos-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Cantidad</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let detalle of turnoSeleccionado.detalles">
+              <td>{{ detalle.producto?.nombre || 'Producto ID: ' + detalle.idProducto }}</td>
+              <td>{{ detalle.cantidad }}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td><strong>Total:</strong></td>
+              <td><strong>{{ getTotalProductos(turnoSeleccionado.detalles) }}</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Acciones en el modal -->
+      <div class="modal-actions">
+        <button 
+          *ngIf="turnoSeleccionado.estado === 'AGENDADO'" 
+          class="btn btn-success" 
+          (click)="abrirModalJaula(turnoSeleccionado)"
+        >
+          Iniciar Recepción
+        </button>
+        
+        <button 
+          *ngIf="turnoSeleccionado.estado === 'EN_RECEPCION'" 
+          class="btn btn-warning" 
+          (click)="finalizarRecepcion(turnoSeleccionado)"
+        >
+          Finalizar Recepción
+        </button>
+        
+        <button class="btn btn-secondary" (click)="cerrarDetalles()">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de selección de jaula -->
+<div class="modal-overlay" *ngIf="mostrarModalJaula" (click)="cerrarModalJaula()">
+  <div class="modal-content modal-jaula" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Seleccionar Jaula para Recepción</h3>
+      <button class="btn-close" (click)="cerrarModalJaula()">&times;</button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="jaula-info" *ngIf="turnoParaIniciar">
+        <p><strong>Turno:</strong> #{{ turnoParaIniciar.idTurno }}</p>
+        <p><strong>Proveedor:</strong> {{ turnoParaIniciar.proveedor?.nombre }}</p>
+        <p><strong>Total Productos:</strong> {{ getTotalProductos(turnoParaIniciar.detalles) }}</p>
+      </div>
+
+      <div class="jaulas-selection">
+        <h4>Jaulas Disponibles:</h4>
+        <div class="jaulas-grid" *ngIf="jaulasDisponibles.length > 0; else noJaulasDisponibles">
+          <div 
+            *ngFor="let jaula of jaulasDisponibles" 
+            class="jaula-card"
+            [class.selected]="jaula.idJaula === jaulaSeleccionada"
+            (click)="jaulaSeleccionada = jaula.idJaula"
+          >
+            <div class="jaula-name">{{ jaula.nombre }}</div>
+            <div class="jaula-status">Disponible</div>
+          </div>
+        </div>
+
+        <ng-template #noJaulasDisponibles>
+          <div class="no-data">
+            <p>No hay jaulas disponibles en este momento.</p>
+          </div>
+        </ng-template>
+      </div>
+
+      <div class="modal-actions">
+        <button 
+          class="btn btn-success" 
+          [disabled]="!jaulaSeleccionada"
+          (click)="iniciarRecepcion()"
+        >
+          Confirmar e Iniciar
+        </button>
+        
+        <button class="btn btn-secondary" (click)="cerrarModalJaula()">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
