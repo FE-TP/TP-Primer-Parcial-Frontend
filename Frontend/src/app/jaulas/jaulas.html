@@ -1,0 +1,63 @@
+<!-- Encabezado del módulo -->
+<div class="header-container">
+	<h1 class="page-title">Administración de Jaulas de Recepción</h1>
+	<div></div>
+</div>
+
+<!-- Mensaje de feedback -->
+<div *ngIf="mensaje" class="alert alert-info" style="margin-bottom:1rem;">{{ mensaje }}</div>
+
+<!-- Formulario para agregar nueva jaula -->
+<div class="form-container">
+	<input class="form-control" placeholder="Nombre de la jaula" [(ngModel)]="nuevaJaula.nombre">
+	<select class="form-control" [(ngModel)]="nuevaJaula.enUso">
+		<option value="N">No en uso</option>
+		<option value="S">En uso</option>
+	</select>
+	<button class="btn btn-primary" (click)="agregarJaula()">Agregar</button>
+</div>
+
+<!-- Filtro por nombre -->
+<div class="form-container" style="margin-top:1rem;">
+	<input class="form-control" placeholder="Filtrar por nombre" [(ngModel)]="filtroNombre">
+</div>
+
+<!-- Tabla de jaulas -->
+<div class="table-container" style="margin-top:1.5rem;">
+	<table class="turnos-table">
+		<thead>
+			<tr>
+				<th>ID</th>
+				<th>Nombre</th>
+				<th>En Uso</th>
+				<th>Acciones</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr *ngFor="let jaula of jaulasFiltradas">
+				<td>{{ jaula.idJaula }}</td>
+				<td *ngIf="!editando || editando.idJaula !== jaula.idJaula">{{ jaula.nombre }}</td>
+				<td *ngIf="editando && editando.idJaula === jaula.idJaula">
+					<input class="form-control" [(ngModel)]="editando.nombre">
+				</td>
+				<td *ngIf="!editando || editando.idJaula !== jaula.idJaula">{{ jaula.enUso === 'S' ? 'Sí' : 'No' }}</td>
+				<td *ngIf="editando && editando.idJaula === jaula.idJaula">
+					<select class="form-control" [(ngModel)]="editando.enUso">
+						<option value="N">No en uso</option>
+						<option value="S">En uso</option>
+					</select>
+				</td>
+				<td>
+					<ng-container *ngIf="!editando || editando.idJaula !== jaula.idJaula">
+						<button class="btn btn-sm btn-warning" (click)="editarJaula(jaula)">Editar</button>
+						<button class="btn btn-sm btn-danger" (click)="eliminarJaula(jaula.idJaula)">Eliminar</button>
+					</ng-container>
+					<ng-container *ngIf="editando && editando.idJaula === jaula.idJaula">
+						<button class="btn btn-sm btn-success" (click)="guardarEdicion()">Guardar</button>
+						<button class="btn btn-sm btn-secondary" (click)="cancelarEdicion()">Cancelar</button>
+					</ng-container>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
