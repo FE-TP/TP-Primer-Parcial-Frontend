@@ -1,1 +1,61 @@
-<p>jaulas works!</p>
+<div class="header-container">
+	<h1 class="page-title">Administración de Jaulas</h1>
+	<button class="btn btn-primary" type="button" (click)="nuevaJaula = { idJaula: 0, nombre: '', enUso: 'N' }">Nueva Jaula</button>
+</div>
+
+<div class="mb-3">
+	<input class="form-control" placeholder="Filtrar por nombre" [(ngModel)]="filtroNombre" aria-label="Filtrar por nombre" />
+</div>
+
+<form class="mb-3 d-flex form-container" (ngSubmit)="agregarJaula()">
+	<input class="form-control me-2" placeholder="Nombre de la jaula" [(ngModel)]="nuevaJaula.nombre" name="nombre" required aria-label="Nombre de la jaula" />
+	<select class="form-control me-2" [(ngModel)]="nuevaJaula.enUso" name="enUso" aria-label="Estado de la jaula">
+		<option value="N">Libre</option>
+		<option value="S">En uso</option>
+	</select>
+	<button class="btn btn-success" type="submit">Agregar</button>
+</form>
+
+<div *ngIf="mensaje" class="alert-info mb-3">{{ mensaje }}</div>
+
+<div class="table-container">
+	<table class="table">
+		<thead>
+			<tr>
+				<th>ID</th>
+				<th>Nombre</th>
+				<th>Estado</th>
+				<th>Acciones</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr *ngFor="let jaula of jaulasFiltradas">
+				<td>{{ jaula.idJaula }}</td>
+				<td *ngIf="!editando || editando.idJaula !== jaula.idJaula">{{ jaula.nombre }}</td>
+				<td *ngIf="editando && editando.idJaula === jaula.idJaula">
+					<input class="form-control" [(ngModel)]="editando.nombre" name="editNombre{{jaula.idJaula}}" aria-label="Editar nombre de la jaula" />
+				</td>
+				<td>
+					<span class="badge" [ngClass]="{
+						'badge-success': jaula.enUso === 'N',
+						'badge-danger': jaula.enUso === 'S'
+					}">
+						<i *ngIf="jaula.enUso === 'N'" class="fa fa-check-circle"></i>
+						<i *ngIf="jaula.enUso === 'S'" class="fa fa-times-circle"></i>
+						{{ jaula.enUso === 'N' ? 'Libre' : 'En uso' }}
+					</span>
+				</td>
+				<td>
+					<ng-container *ngIf="!editando || editando.idJaula !== jaula.idJaula">
+						<button class="btn btn-warning btn-sm me-1" type="button" (click)="editarJaula(jaula)">Editar</button>
+						<button class="btn btn-danger btn-sm" type="button" (click)="eliminarJaula(jaula.idJaula)">Eliminar</button>
+					</ng-container>
+					<ng-container *ngIf="editando && editando.idJaula === jaula.idJaula">
+						<button class="btn btn-success btn-sm me-1" type="button" (click)="guardarEdicion()">Guardar</button>
+						<button class="btn btn-secondary btn-sm" type="button" (click)="cancelarEdicion()">Cancelar</button>
+					</ng-container>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
