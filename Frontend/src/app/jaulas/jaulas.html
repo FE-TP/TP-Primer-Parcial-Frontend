@@ -1,25 +1,264 @@
+
+
 <div class="header-container">
 	<h1 class="page-title">Administración de Jaulas</h1>
-	<button class="btn btn-primary" type="button" (click)="nuevaJaula = { idJaula: 0, nombre: '', enUso: 'N' }">Nueva Jaula</button>
 </div>
 
-<div class="mb-3">
-	<input class="form-control" placeholder="Filtrar por nombre" [(ngModel)]="filtroNombre" aria-label="Filtrar por nombre" />
+<!-- Modal para nueva jaula -->
+<div class="modal-backdrop" *ngIf="mostrarModalNuevaJaula" (click)="$event.target === $event.currentTarget && cerrarModalNuevaJaula()" 
+     role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
+	<div class="modal-jaula enhanced-modal" role="document">
+		<div class="modal-header">
+			<div class="header-content">
+				<div class="modal-icon" aria-hidden="true">
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+						<path d="M2 17L12 22L22 17" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+						<path d="M2 12L12 17L22 12" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>
+				</div>
+				<div class="header-text">
+					<h2 id="modal-title" class="modal-title">Nueva Jaula</h2>
+					<p class="modal-subtitle">Completa la información para crear una nueva jaula</p>
+				</div>
+			</div>
+			<button class="close-btn modern-close" type="button" (click)="cerrarModalNuevaJaula()" aria-label="Cerrar modal">
+				<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+				</svg>
+			</button>
+		</div>
+		
+		<form class="enhanced-form" (ngSubmit)="agregarJaula()" novalidate>
+			<div class="form-grid">
+				<div class="input-group">
+					<label for="nombreJaula" class="input-label">
+						<svg class="label-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+							<path d="M2 3H14C14.5523 3 15 3.44772 15 4V12C15 12.5523 14.5523 13 14 13H2C1.44772 13 1 12.5523 1 12V4C1 3.44772 1.44772 3 2 3Z" stroke="currentColor" stroke-width="1.5"/>
+							<path d="M5 7H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+						</svg>
+						Nombre de la jaula *
+					</label>
+					<input 
+						id="nombreJaula" 
+						class="enhanced-input" 
+						placeholder="Ej: Jaula Principal A" 
+						[(ngModel)]="nuevaJaula.nombre" 
+						name="nombre" 
+						required 
+						minlength="3"
+						maxlength="50"
+						aria-label="Nombre de la jaula"
+						aria-describedby="nombre-hint"
+						autocomplete="off" />
+					<div id="nombre-hint" class="input-hint">Ingresa un nombre descriptivo para identificar la jaula (mínimo 3 caracteres)</div>
+				</div>
+
+				<div class="input-group">
+					<label for="estadoJaula" class="input-label">
+						<svg class="label-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+							<circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
+							<path d="M6 8L7.5 9.5L10.5 6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+						</svg>
+						Estado inicial
+					</label>
+					<div class="select-wrapper">
+						<select 
+							id="estadoJaula" 
+							class="enhanced-select" 
+							[(ngModel)]="nuevaJaula.enUso" 
+							name="enUso" 
+							aria-label="Estado de la jaula"
+							aria-describedby="estado-hint">
+							<option value="N">🟢 Libre - Disponible para uso</option>
+							<option value="S">🔴 En uso - Ocupada actualmente</option>
+						</select>
+						<svg class="select-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+							<path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+						</svg>
+					</div>
+					<div id="estado-hint" class="input-hint">Define si la jaula estará disponible o en uso desde el inicio</div>
+				</div>
+			</div>
+
+			<div class="form-actions">
+				<button class="btn btn-secondary enhanced-btn btn-cancel" type="button" (click)="cerrarModalNuevaJaula()" [disabled]="cargandoFormulario">
+					<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+						<path d="M12 4L4 12M4 4L12 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>
+					Cancelar
+				</button>
+				<button class="btn btn-success enhanced-btn btn-primary" type="submit" [disabled]="cargandoFormulario">
+					<svg *ngIf="!cargandoFormulario" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+						<path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>
+					<svg *ngIf="cargandoFormulario" class="loading-spinner" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+						<circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="37.7" stroke-dashoffset="37.7">
+							<animate attributeName="stroke-dashoffset" dur="1s" values="37.7;0" repeatCount="indefinite"/>
+						</circle>
+					</svg>
+					{{ cargandoFormulario ? 'Creando...' : 'Crear Jaula' }}
+				</button>
+			</div>
+		</form>
+	</div>
 </div>
 
-<form class="mb-3 d-flex form-container" (ngSubmit)="agregarJaula()">
-	<input class="form-control me-2" placeholder="Nombre de la jaula" [(ngModel)]="nuevaJaula.nombre" name="nombre" required aria-label="Nombre de la jaula" />
-	<select class="form-control me-2" [(ngModel)]="nuevaJaula.enUso" name="enUso" aria-label="Estado de la jaula">
-		<option value="N">Libre</option>
-		<option value="S">En uso</option>
-	</select>
-	<button class="btn btn-success" type="submit">Agregar</button>
-</form>
+<!-- Modal para editar jaula -->
+<div class="modal-backdrop" *ngIf="mostrarModalEditarJaula" (click)="$event.target === $event.currentTarget && cerrarModalEditarJaula()" 
+     role="dialog" aria-modal="true" aria-labelledby="modal-edit-title" tabindex="-1">
+	<div class="modal-jaula enhanced-modal" role="document">
+		<div class="modal-header">
+			<div class="header-content">
+				<div class="modal-icon edit-icon" aria-hidden="true">
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+						<path d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.4374 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>
+				</div>
+				<div class="header-text">
+					<h2 id="modal-edit-title" class="modal-title">Editar Jaula</h2>
+					<p class="modal-subtitle">Modifica la información de la jaula seleccionada</p>
+				</div>
+			</div>
+			<button class="close-btn modern-close" type="button" (click)="cerrarModalEditarJaula()" aria-label="Cerrar modal">
+				<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+				</svg>
+			</button>
+		</div>
+		
+		<form class="enhanced-form" (ngSubmit)="guardarEdicion()" novalidate>
+			<div class="form-grid">
+				<div class="input-group">
+					<label for="nombreJaulaEdit" class="input-label">
+						<svg class="label-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+							<path d="M2 3H14C14.5523 3 15 3.44772 15 4V12C15 12.5523 14.5523 13 14 13H2C1.44772 13 1 12.5523 1 12V4C1 3.44772 1.44772 3 2 3Z" stroke="currentColor" stroke-width="1.5"/>
+							<path d="M5 7H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+						</svg>
+						Nombre de la jaula *
+					</label>
+					<input 
+						id="nombreJaulaEdit" 
+						class="enhanced-input" 
+						placeholder="Ej: Jaula Principal A" 
+						[(ngModel)]="editando!.nombre" 
+						name="nombreEdit" 
+						required 
+						minlength="3"
+						maxlength="50"
+						aria-label="Nombre de la jaula"
+						aria-describedby="nombre-edit-hint"
+						autocomplete="off" />
+					<div id="nombre-edit-hint" class="input-hint">Modifica el nombre de la jaula (mínimo 3 caracteres)</div>
+				</div>
 
-<div *ngIf="mensaje" class="alert-info mb-3">{{ mensaje }}</div>
+				<div class="input-group">
+					<label for="estadoJaulaEdit" class="input-label">
+						<svg class="label-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+							<circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
+							<path d="M6 8L7.5 9.5L10.5 6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+						</svg>
+						Estado actual
+					</label>
+					<div class="select-wrapper">
+						<select 
+							id="estadoJaulaEdit" 
+							class="enhanced-select" 
+							[(ngModel)]="editando!.enUso" 
+							name="enUsoEdit" 
+							aria-label="Estado de la jaula"
+							aria-describedby="estado-edit-hint">
+							<option value="N">🟢 Libre - Disponible para uso</option>
+							<option value="S">🔴 En uso - Ocupada actualmente</option>
+						</select>
+						<svg class="select-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+							<path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+						</svg>
+					</div>
+					<div id="estado-edit-hint" class="input-hint">Cambia el estado actual de disponibilidad de la jaula</div>
+				</div>
+			</div>
+
+			<div class="form-actions">
+				<button class="btn btn-secondary enhanced-btn btn-cancel" type="button" (click)="cerrarModalEditarJaula()" [disabled]="cargandoFormulario">
+					<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+						<path d="M12 4L4 12M4 4L12 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>
+					Cancelar
+				</button>
+				<button class="btn btn-warning enhanced-btn btn-warning-custom" type="submit" [disabled]="cargandoFormulario">
+					<svg *ngIf="!cargandoFormulario" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+						<path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>
+					<svg *ngIf="cargandoFormulario" class="loading-spinner" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+						<circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="37.7" stroke-dashoffset="37.7">
+							<animate attributeName="stroke-dashoffset" dur="1s" values="37.7;0" repeatCount="indefinite"/>
+						</circle>
+					</svg>
+					{{ cargandoFormulario ? 'Guardando...' : 'Guardar Cambios' }}
+				</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+
+<div class="top-controls">
+	<button class="btn btn-primary" type="button" (click)="abrirModalNuevaJaula()">Nueva Jaula</button>
+	<div class="search-box">
+		<div class="input-icon-wrapper">
+			<input class="form-control" placeholder="Filtrar por nombre" [(ngModel)]="filtroNombre" aria-label="Filtrar por nombre" />
+			<span class="search-icon">
+				<!-- SVG lupa -->
+				<svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<circle cx="9" cy="9" r="7" stroke="#888" stroke-width="2"/>
+					<line x1="14.4142" y1="14" x2="18" y2="17.5858" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+				</svg>
+			</span>
+		</div>
+	</div>
+</div>
+
+<div *ngIf="mensaje" class="modern-alert" [ngClass]="{
+	'alert-success': mensaje.includes('✅'),
+	'alert-warning': mensaje.includes('⚠️'),
+	'alert-danger': mensaje.includes('🗑️'),
+	'alert-info': !mensaje.includes('✅') && !mensaje.includes('⚠️') && !mensaje.includes('🗑️')
+}">
+	<div class="alert-content">
+		<div class="alert-icon">
+			<svg *ngIf="mensaje.includes('✅')" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<circle cx="10" cy="10" r="8" fill="currentColor" opacity="0.2"/>
+				<path d="M6 10L8.5 12.5L14 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+			</svg>
+			<svg *ngIf="mensaje.includes('⚠️')" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<path d="M10 2L18 16H2L10 2Z" fill="currentColor" opacity="0.2"/>
+				<path d="M10 8V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+				<circle cx="10" cy="15" r="1" fill="currentColor"/>
+			</svg>
+			<svg *ngIf="mensaje.includes('🗑️')" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<path d="M3 6H17L15.5 18H4.5L3 6Z" fill="currentColor" opacity="0.2"/>
+				<path d="M8 1H12V3H8V1Z" stroke="currentColor" stroke-width="1.5"/>
+				<path d="M2 3H18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+			</svg>
+			<svg *ngIf="!mensaje.includes('✅') && !mensaje.includes('⚠️') && !mensaje.includes('🗑️')" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<circle cx="10" cy="10" r="8" fill="currentColor" opacity="0.2"/>
+				<path d="M10 6V10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+				<circle cx="10" cy="14" r="1" fill="currentColor"/>
+			</svg>
+		</div>
+		<span class="alert-text">{{ mensaje }}</span>
+	</div>
+	<button class="alert-close" (click)="mensaje = ''" aria-label="Cerrar mensaje">
+		<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+			<path d="M12 4L4 12M4 4L12 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+		</svg>
+	</button>
+</div>
 
 <div class="table-container">
-	<table class="table">
+	<table class="table jaulas-table">
 		<thead>
 			<tr>
 				<th>ID</th>
@@ -31,12 +270,9 @@
 		<tbody>
 			<tr *ngFor="let jaula of jaulasFiltradas">
 				<td>{{ jaula.idJaula }}</td>
-				<td *ngIf="!editando || editando.idJaula !== jaula.idJaula">{{ jaula.nombre }}</td>
-				<td *ngIf="editando && editando.idJaula === jaula.idJaula">
-					<input class="form-control" [(ngModel)]="editando.nombre" name="editNombre{{jaula.idJaula}}" aria-label="Editar nombre de la jaula" />
-				</td>
+				<td>{{ jaula.nombre }}</td>
 				<td>
-					<span class="badge" [ngClass]="{
+					<span class="badge estado-badge" [ngClass]="{
 						'badge-success': jaula.enUso === 'N',
 						'badge-danger': jaula.enUso === 'S'
 					}">
@@ -46,16 +282,80 @@
 					</span>
 				</td>
 				<td>
-					<ng-container *ngIf="!editando || editando.idJaula !== jaula.idJaula">
-						<button class="btn btn-warning btn-sm me-1" type="button" (click)="editarJaula(jaula)">Editar</button>
-						<button class="btn btn-danger btn-sm" type="button" (click)="eliminarJaula(jaula.idJaula)">Eliminar</button>
-					</ng-container>
-					<ng-container *ngIf="editando && editando.idJaula === jaula.idJaula">
-						<button class="btn btn-success btn-sm me-1" type="button" (click)="guardarEdicion()">Guardar</button>
-						<button class="btn btn-secondary btn-sm" type="button" (click)="cancelarEdicion()">Cancelar</button>
-					</ng-container>
+					<div class="action-btns">
+						<button class="btn btn-warning btn-sm modern-table-btn" type="button" (click)="editarJaula(jaula)" aria-label="Editar jaula {{ jaula.nombre }}">
+							<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path d="M11.9999 3.99994L11.9999 1.33328C11.9999 0.965088 11.7013 0.666611 11.3331 0.666611L1.33317 0.666611C0.964981 0.666611 0.666504 0.965088 0.666504 1.33328L0.666504 11.3333C0.666504 11.7015 0.964981 11.9999 1.33317 11.9999L3.99984 11.9999" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+								<path d="M7.33317 15.3333L15.3332 7.33328C15.7013 6.96509 15.7013 6.36814 15.3332 5.99994L9.99984 0.666611C9.63164 0.298422 9.03469 0.298422 8.6665 0.666611L0.666504 8.66661L0.666504 13.9999L5.99984 13.9999L7.33317 15.3333Z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+							</svg>
+							Editar
+						</button>
+						<button class="btn btn-danger btn-sm modern-table-btn" type="button" (click)="eliminarJaula(jaula.idJaula)" aria-label="Eliminar jaula {{ jaula.nombre }}">
+							<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path d="M2 4H14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+								<path d="M5.33333 4V2.66667C5.33333 2.29848 5.63181 2 6 2H10C10.3682 2 10.6667 2.29848 10.6667 2.66667V4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+								<path d="M3.33333 4V13.3333C3.33333 13.7015 3.63181 14 4 14H12C12.3682 14 12.6667 13.7015 12.6667 13.3333V4" stroke="currentColor" stroke-width="1.3"/>
+								<path d="M6.66667 7.33333V10.6667" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+								<path d="M9.33333 7.33333V10.6667" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+							</svg>
+							Eliminar
+						</button>
+					</div>
 				</td>
 			</tr>
 		</tbody>
 	</table>
+</div>
+
+<!-- Modal de confirmación de eliminación -->
+<div class="modal-backdrop" *ngIf="mostrarModalEliminar" (click)="$event.target === $event.currentTarget && cerrarModalEliminar()" 
+     role="dialog" aria-modal="true" aria-labelledby="modal-delete-title" tabindex="-1">
+	<div class="modal-jaula enhanced-modal delete-modal" role="document">
+		<div class="modal-header">
+			<div class="header-content">
+				<div class="modal-icon delete-icon" aria-hidden="true">
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M3 6H21" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/>
+						<path d="M8 6V4C8 3.44772 8.44772 3 9 3H15C15.5523 3 16 3.44772 16 4V6" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/>
+						<path d="M19 6V20C19 20.5523 18.5523 21 18 21H6C5.44772 21 5 20.5523 5 20V6" stroke="#EF4444" stroke-width="2"/>
+						<path d="M10 11V16" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/>
+						<path d="M14 11V16" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/>
+					</svg>
+				</div>
+				<div class="header-text">
+					<h2 id="modal-delete-title" class="modal-title">Confirmar Eliminación</h2>
+					<p class="modal-subtitle">Esta acción no se puede deshacer</p>
+				</div>
+			</div>
+			<button class="close-btn modern-close" type="button" (click)="cerrarModalEliminar()" aria-label="Cerrar modal">
+				<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+				</svg>
+			</button>
+		</div>
+		
+		<div class="delete-content">
+			<div class="delete-message">
+				<p>¿Estás seguro de que deseas eliminar esta jaula?</p>
+				<p class="delete-warning">Esta acción no se puede deshacer y se perderán todos los datos asociados.</p>
+			</div>
+
+			<div class="form-actions">
+				<button class="btn btn-secondary enhanced-btn btn-cancel" type="button" (click)="cerrarModalEliminar()">
+					<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+						<path d="M12 4L4 12M4 4L12 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>
+					Cancelar
+				</button>
+				<button class="btn btn-danger enhanced-btn btn-danger-custom" type="button" (click)="confirmarEliminacion()">
+					<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+						<path d="M2 4H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+						<path d="M5.33333 4V2.66667C5.33333 2.29848 5.63181 2 6 2H10C10.3682 2 10.6667 2.29848 10.6667 2.66667V4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+						<path d="M3.33333 4V13.3333C3.33333 13.7015 3.63181 14 4 14H12C12.3682 14 12.6667 13.7015 12.6667 13.3333V4" stroke="currentColor" stroke-width="1.5"/>
+					</svg>
+					Eliminar Jaula
+				</button>
+			</div>
+		</div>
+	</div>
 </div>
