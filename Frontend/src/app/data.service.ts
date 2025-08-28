@@ -196,4 +196,59 @@ export class DataService {
   getJaulaById(id: number): Jaula | undefined {
     return this.getJaulas().find(j => j.idJaula === id);
   }
+
+  
+  // ============================
+  // CRUD de Jaulas
+  // ============================
+
+  addJaula(jaula: Omit<Jaula, 'idJaula'>): boolean {
+    const actuales = this.jaulasSubject.getValue();
+    const nuevo: Jaula = {
+      idJaula: actuales.length > 0 ? Math.max(...actuales.map(j => j.idJaula)) + 1 : 1,
+      ...jaula
+    };
+    this.jaulasSubject.next([...actuales, nuevo]);
+    return true;
+  }
+
+  updateJaula(jaula: Jaula): boolean {
+    const actuales = this.jaulasSubject.getValue();
+    const index = actuales.findIndex(j => j.idJaula === jaula.idJaula);
+    if (index !== -1) {
+      actuales[index] = { ...jaula };
+      this.jaulasSubject.next([...actuales]);
+      return true;
+    }
+    return false;
+  }
+
+  deleteJaula(id: number): boolean {
+    const actuales = this.jaulasSubject.getValue();
+    const filtradas = actuales.filter(j => j.idJaula !== id);
+    if (filtradas.length !== actuales.length) {
+      // Actualizar turnos asociados a la jaula eliminada
+      const turnos = this.turnosSubject.getValue();
+      const turnosActualizados = turnos.map(turno => {
+        if (turno.idJaula === id) {
+          return {
+            ...turno,
+            idJaula: undefined,
+            jaula: undefined,
+            horaInicioRecepcion: undefined,
+            horaFinRecepcion: undefined,
+            estado: 'AGENDADO' as const
+          };
+        }
+        return turno;
+      });
+      
+      // Actualizar ambos subjects
+      this.jaulasSubject.next(filtradas);
+      this.turnosSubject.next(turnosActualizados);
+      return true;
+    }
+    return false;
+  }
+
 }
