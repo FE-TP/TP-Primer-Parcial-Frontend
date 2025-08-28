@@ -15,8 +15,8 @@ export class AppComponent {
   menuItems = [
     { path: '/recepcion', label: 'Recepción de Productos', icon: '📦' },
     { path: '/jaulas', label: 'Jaulas', icon: '🏗️' },
+    { path: '/proveedores', label: 'Proveedores', icon: '🏢' },
     // Aquí agregarás los enlaces a los módulos de tus compañeros cuando los integren
-    // { path: '/proveedores', label: 'Proveedores', icon: '🏢' },
     // { path: '/productos', label: 'Productos', icon: '📋' },
     // { path: '/reservas', label: 'Reservas', icon: '📅' }
   ];

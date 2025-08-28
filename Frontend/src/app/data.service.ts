@@ -251,4 +251,45 @@ export class DataService {
     return false;
   }
 
+  // ============================
+  // CRUD de Proveedores
+  // ============================
+
+  addProveedor(proveedor: Omit<Proveedor, 'idProveedor'>): boolean {
+    const actuales = this.proveedoresSubject.getValue();
+    const nuevo: Proveedor = {
+      idProveedor: actuales.length > 0 ? Math.max(...actuales.map(p => p.idProveedor)) + 1 : 1,
+      ...proveedor
+    };
+    this.proveedoresSubject.next([...actuales, nuevo]);
+    return true;
+  }
+
+  updateProveedor(proveedor: Proveedor): boolean {
+    const actuales = this.proveedoresSubject.getValue();
+    const index = actuales.findIndex(p => p.idProveedor === proveedor.idProveedor);
+    if (index !== -1) {
+      actuales[index] = { ...proveedor };
+      this.proveedoresSubject.next([...actuales]);
+      return true;
+    }
+    return false;
+  }
+
+  deleteProveedor(id: number): boolean {
+    const actuales = this.proveedoresSubject.getValue();
+    const filtrados = actuales.filter(p => p.idProveedor !== id);
+    if (filtrados.length !== actuales.length) {
+      // Actualizar turnos asociados al proveedor eliminado
+      const turnos = this.turnosSubject.getValue();
+      const turnosActualizados = turnos.filter(turno => turno.idProveedor !== id);
+      
+      // Actualizar ambos subjects
+      this.proveedoresSubject.next(filtrados);
+      this.turnosSubject.next(turnosActualizados);
+      return true;
+    }
+    return false;
+  }
+
 }
