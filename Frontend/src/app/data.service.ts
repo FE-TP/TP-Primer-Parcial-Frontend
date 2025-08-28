@@ -227,7 +227,25 @@ export class DataService {
     const actuales = this.jaulasSubject.getValue();
     const filtradas = actuales.filter(j => j.idJaula !== id);
     if (filtradas.length !== actuales.length) {
+      // Actualizar turnos asociados a la jaula eliminada
+      const turnos = this.turnosSubject.getValue();
+      const turnosActualizados = turnos.map(turno => {
+        if (turno.idJaula === id) {
+          return {
+            ...turno,
+            idJaula: undefined,
+            jaula: undefined,
+            horaInicioRecepcion: undefined,
+            horaFinRecepcion: undefined,
+            estado: 'AGENDADO' as const
+          };
+        }
+        return turno;
+      });
+      
+      // Actualizar ambos subjects
       this.jaulasSubject.next(filtradas);
+      this.turnosSubject.next(turnosActualizados);
       return true;
     }
     return false;
