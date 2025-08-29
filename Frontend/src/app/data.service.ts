@@ -250,5 +250,40 @@ export class DataService {
     }
     return false;
   }
+  // ============================
+  // CRUD - Productos
+  // ============================
+
+  addProducto(producto: Omit<Producto, 'idProducto'>): boolean {
+    const actuales = this.productosSubject.getValue();
+    const nuevo: Producto = {
+      idProducto: actuales.length > 0 ? Math.max(...actuales.map(p => p.idProducto)) + 1 : 1,
+      ...producto
+    };
+    this.productosSubject.next([...actuales, nuevo]);
+    return true;
+  }
+
+  updateProducto(producto: Producto): boolean {
+    const actuales = this.productosSubject.getValue();
+    const index = actuales.findIndex(p => p.idProducto === producto.idProducto);
+    if (index !== -1) {
+      actuales[index] = { ...producto };
+      this.productosSubject.next([...actuales]);
+      return true;
+    }
+    return false;
+  }
+
+  deleteProducto(id: number): boolean {
+    const actuales = this.productosSubject.getValue();
+    const filtrados = actuales.filter(p => p.idProducto !== id);
+    if (filtrados.length !== actuales.length) {
+      this.productosSubject.next(filtrados);
+      return true;
+    }
+    return false;
+  }
+
 
 }

@@ -1,0 +1,54 @@
+<div class="header-container">
+  <h1 class="page-title">Administración de Productos</h1>
+  <button class="btn btn-primary" (click)="nuevoProducto()">➕ Nuevo Producto</button>
+</div>
+
+<div class="table-container">
+  <!-- Filtro -->
+  <input
+    type="text"
+    class="form-control mb-3"
+    placeholder="Buscar producto..."
+    [(ngModel)]="filtro"
+  />
+
+  <!-- Tabla -->
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th class="text-center">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let p of productosFiltrados">
+        <td>{{ p.idProducto }}</td>
+        <td>{{ p.nombre }}</td>
+        <td class="text-center">
+          <button class="btn btn-warning me-2" (click)="editarProducto(p)">✏️ Editar</button>
+          <button class="btn btn-danger" (click)="eliminarProducto(p)">🗑️ Eliminar</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" *ngIf="mostrarModal">
+  <div class="modal-content">
+    <h2>{{ modoEdicion ? 'Editar Producto' : 'Nuevo Producto' }}</h2>
+
+    <input
+      type="text"
+      class="form-control mb-3"
+      placeholder="Nombre del producto"
+      [(ngModel)]="nombre"
+    />
+
+    <div class="d-flex justify-content-end">
+      <button class="btn btn-success me-2" (click)="guardarProducto()">💾 Guardar</button>
+      <button class="btn btn-danger" (click)="cerrarModal()">❌ Cancelar</button>
+    </div>
+  </div>
+</div>
