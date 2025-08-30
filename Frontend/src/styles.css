@@ -1,3 +1,9 @@
+/* Importar sistema de diseño unificado */
+@import 'app/design-system.css';
+
+/* Importar estilos compartidos existentes */
+@import 'app/shared-styles.css';
+
 /* Estilos globales de la aplicación */
 
 /* Reset básico */
