@@ -1,151 +1,239 @@
-<div class="productos-container">
-  <!-- Mensajes de notificación -->
-  <div *ngIf="mensaje" class="alert" [ngClass]="{'alert-success': tipoMensaje === 'success', 'alert-danger': tipoMensaje === 'error'}">
-    <span class="icon-info" *ngIf="tipoMensaje === 'success'">✅</span>
-    <span class="icon-danger" *ngIf="tipoMensaje === 'error'">❌</span>
-    {{ mensaje }}
-  </div>
-
-  <!-- Header -->
+<div class="page-container">
+  <!-- Encabezado de página -->
   <div class="header-container">
     <h1 class="page-title">Administración de Productos</h1>
-    <button class="btn btn-primary" (click)="nuevoProducto()">
-      <span>➕</span>
+  </div>
+
+  <!-- Controles: búsqueda + botón principal -->
+  <div class="controls-container">
+    <div class="search-container">
+      <div class="search-wrapper">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M7.33333 12.6667C10.2789 12.6667 12.6667 10.2789 12.6667 7.33333C12.6667 4.38781 10.2789 2 7.33333 2C4.38781 2 2 4.38781 2 7.33333C2 10.2789 4.38781 12.6667 7.33333 12.6667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M14 14L11.1 11.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <input 
+          class="search-input" 
+          placeholder="Buscar productos por nombre..." 
+          [(ngModel)]="filtroNombre"
+          aria-label="Filtrar productos por nombre"
+          autocomplete="off"
+        />
+      </div>
+    </div>
+    
+    <button class="btn btn-primary" (click)="abrirModalNuevoProducto()" aria-label="Agregar nuevo producto">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 1V15M1 8H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
       Nuevo Producto
     </button>
   </div>
 
+  <!-- Mensaje de feedback -->
+  <div *ngIf="mensaje" class="alert alert-info mb-xl">
+    {{ mensaje }}
+  </div>
+
+  <!-- Tabla de productos -->
   <div class="table-container">
-    <!-- Filtro -->
-    <input
-      type="text"
-      class="form-control mb-3"
-      placeholder="🔍 Buscar producto por nombre..."
-      [(ngModel)]="filtro"
-    />
-
-    <!-- Estado vacío -->
-    <div *ngIf="productosFiltrados.length === 0 && filtro === ''" class="empty-state">
-      <div class="empty-state-icon">📦</div>
-      <div class="empty-state-text">No hay productos registrados</div>
-      <button class="btn btn-primary" (click)="nuevoProducto()">
-        <span>➕</span>
-        Crear primer producto
-      </button>
+    <div class="table-wrapper">
+      <table class="table" role="table" aria-label="Lista de productos">
+        <thead>
+          <tr role="row">
+            <!-- ENCABEZADOS SIN ICONOS según las reglas -->
+            <th scope="col">ID</th>
+            <th scope="col">Nombre</th>
+            <th scope="col" class="actions-column">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- FILAS CON ICONOS según las reglas -->
+          <tr *ngFor="let producto of productosFiltrados; trackBy: trackByProducto" class="table-row" role="row">
+            <td [attr.data-label]="'ID'">
+              <span class="status-chip">{{ producto.idProducto }}</span>
+            </td>
+            <td [attr.data-label]="'Nombre'">
+              <div class="d-flex align-items-center gap-sm">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M14 3H2C1.44772 3 1 3.44772 1 4V12C1 12.5523 1.44772 13 2 13H14C14.5523 13 15 12.5523 15 12V4C15 3.44772 14.5523 3 14 3Z" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M10 6L6 10M6 6L10 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                {{ producto.nombre }}
+              </div>
+            </td>
+            <td [attr.data-label]="'Acciones'" class="actions-column">
+              <div class="actions-container">
+                <button 
+                  class="btn btn-secondary btn-sm" 
+                  (click)="editarProducto(producto)" 
+                  [attr.aria-label]="'Editar producto ' + producto.nombre">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 1L13 4L5 12H2V9L10 1Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  Editar
+                </button>
+                <button 
+                  class="btn btn-danger btn-sm" 
+                  (click)="eliminarProducto(producto.idProducto)" 
+                  [attr.aria-label]="'Eliminar producto ' + producto.nombre">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 4H13M5.5 4V2.5C5.5 2.22386 5.72386 2 6 2H8C8.27614 2 8.5 2.22386 8.5 2.5V4M2.5 4V11.5C2.5 11.7761 2.72386 12 3 12H11C11.2761 12 11.5 11.7761 11.5 11.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  Eliminar
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
-    <!-- No hay resultados de búsqueda -->
-    <div *ngIf="productosFiltrados.length === 0 && filtro !== ''" class="empty-state">
-      <div class="empty-state-icon">🔍</div>
-      <div class="empty-state-text">No se encontraron productos que coincidan con "{{ filtro }}"</div>
-      <button class="btn btn-secondary" (click)="limpiarFiltro()">
-        Limpiar búsqueda
-      </button>
-    </div>
-
-    <!-- Tabla -->
-    <table class="table" *ngIf="productosFiltrados.length > 0">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Nombre del Producto</th>
-          <th class="text-center">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let p of productosFiltrados; trackBy: trackByProductoId">
-          <td>
-            <span style="font-family: monospace; font-weight: 600; color: var(--gray-600);">
-              #{{ p.idProducto }}
-            </span>
-          </td>
-          <td>
-            <span style="font-weight: 500;">{{ p.nombre }}</span>
-          </td>
-          <td class="text-center">
-            <button 
-              class="btn btn-warning me-2" 
-              (click)="editarProducto(p)"
-              title="Editar producto">
-              <span class="icon-warning">✏️</span>
-              Editar
-            </button>
-            <button 
-              class="btn btn-danger" 
-              (click)="confirmarEliminacion(p)"
-              title="Eliminar producto">
-              <span class="icon-danger">🗑️</span>
-              Eliminar
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Modal de Producto -->
-  <div class="modal-overlay" *ngIf="mostrarModal">
-    <div class="modal-content">
-      <h2>
-        <span *ngIf="!modoEdicion" class="icon-success">➕</span>
-        <span *ngIf="modoEdicion" class="icon-warning">✏️</span>
-        {{ modoEdicion ? 'Editar Producto' : 'Nuevo Producto' }}
-      </h2>
-
-      <div style="margin-bottom: 1.5rem;">
-        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--gray-700);">
-          Nombre del producto *
-        </label>
-        <input
-          #nombreInput
-          type="text"
-          class="form-control"
-          placeholder="Ingrese el nombre del producto"
-          [(ngModel)]="nombre"
-          (keyup.enter)="guardarProducto()"
-          [style.border-color]="nombreError ? 'var(--danger-color)' : ''"
-        />
-        <small *ngIf="nombreError" style="color: var(--danger-color); margin-top: 0.25rem; display: block;">
-          {{ nombreError }}
-        </small>
-      </div>
-
-      <div class="d-flex justify-content-end" style="gap: 1rem;">
-        <button class="btn btn-secondary" (click)="cerrarModal()">
-          <span>❌</span>
-          Cancelar
-        </button>
-        <button 
-          class="btn btn-success" 
-          (click)="guardarProducto()"
-          [disabled]="!nombre.trim()">
-          <span class="icon-success">💾</span>
-          {{ modoEdicion ? 'Actualizar' : 'Guardar' }}
-        </button>
-      </div>
+    <!-- Información de tabla -->
+    <div *ngIf="productosFiltrados.length > 0" class="text-center mt-lg">
+      <small class="text-tertiary">
+        Mostrando {{ productosFiltrados.length }} producto{{ productosFiltrados.length !== 1 ? 's' : '' }}
+      </small>
     </div>
   </div>
 
-  <!-- Modal de Confirmación de Eliminación -->
-  <div class="modal-overlay confirmation-modal" *ngIf="mostrarModalConfirmacion">
-    <div class="modal-content">
-      <div class="modal-icon icon-danger">🗑️</div>
-      <h3 class="modal-title">¿Confirmar eliminación?</h3>
-      <p class="modal-message">
-        ¿Estás seguro de que deseas eliminar el producto 
-        <strong>"{{ productoAEliminar?.nombre }}"</strong>?
-        <br><br>
-        Esta acción no se puede deshacer.
-      </p>
-      
-      <div class="modal-actions">
-        <button class="btn btn-secondary" (click)="cancelarEliminacion()">
-          <span>❌</span>
+  <!-- Estado vacío -->
+  <div *ngIf="productosFiltrados.length === 0" class="text-center mt-xl">
+    <h3 class="subsection-title">No se encontraron productos</h3>
+    <p class="text-tertiary">Prueba ajustando los filtros de búsqueda o crea un nuevo producto.</p>
+  </div>
+</div>
+
+<!-- Modal para nuevo producto -->
+<div class="modal-backdrop" *ngIf="mostrarModalNuevoProducto" (click)="$event.target === $event.currentTarget && cerrarModalNuevoProducto()" 
+     role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
+  <div class="modal-container" role="document">
+    <div class="modal-header">
+      <h2 id="modal-title" class="modal-title">Nuevo Producto</h2>
+      <button class="modal-close" type="button" (click)="cerrarModalNuevoProducto()" aria-label="Cerrar modal">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <form class="form-container" #productoForm="ngForm" novalidate>
+        <div class="form-grid">
+          <div class="input-group">
+            <label for="nombreProducto" class="input-label">
+              Nombre del producto *
+            </label>
+            <input 
+              id="nombreProducto" 
+              class="form-input" 
+              placeholder="Ej: Laptop Dell Inspiron 15" 
+              [(ngModel)]="nuevoProducto.nombre" 
+              name="nombre" 
+              required 
+              minlength="3"
+              maxlength="100"
+              aria-label="Nombre del producto"
+              autocomplete="off"
+            />
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="cerrarModalNuevoProducto()">
+            Cancelar
+          </button>
+          <button 
+            type="submit" 
+            class="btn btn-primary" 
+            (click)="agregarProducto()" 
+            [disabled]="!productoForm.valid || cargandoFormulario">
+            {{ cargandoFormulario ? 'Creando...' : 'Crear Producto' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para editar producto -->
+<div class="modal-backdrop" *ngIf="mostrarModalEditarProducto" (click)="$event.target === $event.currentTarget && cerrarModalEditarProducto()" 
+     role="dialog" aria-modal="true" aria-labelledby="modal-edit-title" tabindex="-1">
+  <div class="modal-container" role="document">
+    <div class="modal-header">
+      <h2 id="modal-edit-title" class="modal-title">Editar Producto</h2>
+      <button class="modal-close" type="button" (click)="cerrarModalEditarProducto()" aria-label="Cerrar modal">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <form class="form-container" #editForm="ngForm" novalidate>
+        <div class="form-grid">
+          <div class="input-group">
+            <label for="nombreProductoEdit" class="input-label">
+              Nombre del producto *
+            </label>
+            <input 
+              id="nombreProductoEdit" 
+              class="form-input" 
+              placeholder="Ej: Laptop Dell Inspiron 15" 
+              [(ngModel)]="editando!.nombre" 
+              name="nombreEdit" 
+              required 
+              minlength="3"
+              maxlength="100"
+              aria-label="Nombre del producto"
+              autocomplete="off" 
+              *ngIf="editando"
+            />
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="cerrarModalEditarProducto()">
+            Cancelar
+          </button>
+          <button 
+            type="submit" 
+            class="btn btn-primary" 
+            (click)="guardarEdicion()" 
+            [disabled]="!editForm.valid || cargandoFormulario">
+            {{ cargandoFormulario ? 'Guardando...' : 'Guardar Cambios' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmación de eliminación -->
+<div class="modal-backdrop" *ngIf="mostrarModalEliminar" (click)="$event.target === $event.currentTarget && cerrarModalEliminar()" 
+     role="dialog" aria-modal="true" aria-labelledby="modal-delete-title" tabindex="-1">
+  <div class="modal-container" role="document">
+    <div class="modal-header">
+      <h2 id="modal-delete-title" class="modal-title">Confirmar Eliminación</h2>
+      <button class="modal-close" type="button" (click)="cerrarModalEliminar()" aria-label="Cerrar modal">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="text-center mb-xl">
+        <p>¿Estás seguro de que deseas eliminar este producto?</p>
+        <p class="text-tertiary">Esta acción no se puede deshacer y se perderán todos los datos asociados.</p>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModalEliminar()">
           Cancelar
         </button>
-        <button class="btn btn-danger" (click)="confirmarEliminacionDefinitiva()">
-          <span class="icon-danger">🗑️</span>
-          Sí, eliminar
+        <button type="button" class="btn btn-danger" (click)="confirmarEliminacion()">
+          Eliminar Producto
         </button>
       </div>
     </div>

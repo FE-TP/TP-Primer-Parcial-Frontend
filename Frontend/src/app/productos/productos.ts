@@ -1,8 +1,9 @@
-import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../data.service';
 import { Producto } from '../interfaces';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-productos',
@@ -11,215 +12,233 @@ import { Producto } from '../interfaces';
   templateUrl: './productos.html',
   styleUrls: ['./productos.css']
 })
-export class ProductosComponent implements AfterViewInit {
-  @ViewChild('nombreInput') nombreInput!: ElementRef;
+export class ProductosComponent implements OnInit, OnDestroy {
+  private dataService = inject(DataService);
+  private subscription = new Subscription();
 
   productos: Producto[] = [];
-  filtro: string = '';
-  productoSeleccionado: Producto | null = null;
-  productoAEliminar: Producto | null = null;
-  nombre: string = '';
-  nombreError: string = '';
-  mostrarModal: boolean = false;
-  mostrarModalConfirmacion: boolean = false;
-  modoEdicion: boolean = false;
-  
-  // Sistema de mensajes
+  nuevoProducto: Producto = { idProducto: 0, nombre: '' };
+  filtroNombre: string = '';
+  editando: Producto | null = null;
   mensaje: string = '';
-  tipoMensaje: 'success' | 'error' = 'success';
-  private timeoutMensaje: any;
-
-  constructor(private dataService: DataService) {
-    this.dataService.productos$.subscribe(p => {
-      this.productos = p;
-    });
-  }
-
-  ngAfterViewInit() {
-    // Auto-focus en el input cuando se abre el modal
-    if (this.mostrarModal && this.nombreInput) {
-      setTimeout(() => this.nombreInput.nativeElement.focus(), 100);
+  mostrarModalNuevoProducto: boolean = false;
+  mostrarModalEditarProducto: boolean = false;
+  mostrarModalEliminar: boolean = false;
+  productoAEliminar: number | null = null;
+  cargandoFormulario: boolean = false;
+  
+  @HostListener('document:keydown', ['$event'])
+  handleKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      if (this.mostrarModalNuevoProducto) {
+        this.cerrarModalNuevoProducto();
+      } else if (this.mostrarModalEditarProducto) {
+        this.cerrarModalEditarProducto();
+      } else if (this.mostrarModalEliminar) {
+        this.cerrarModalEliminar();
+      }
     }
   }
 
-  // Filtrar productos por nombre
+  abrirModalNuevoProducto(): void {
+    this.nuevoProducto = { idProducto: 0, nombre: '' };
+    this.mostrarModalNuevoProducto = true;
+    // Focus the first input after the modal opens
+    setTimeout(() => {
+      const firstInput = document.getElementById('nombreProducto');
+      if (firstInput) {
+        firstInput.focus();
+      }
+    }, 100);
+  }
+
+  cerrarModalNuevoProducto(): void {
+    this.mostrarModalNuevoProducto = false;
+    this.cargandoFormulario = false;
+  }
+
+  abrirModalEditarProducto(producto: Producto): void {
+    this.editando = { ...producto };
+    this.mostrarModalEditarProducto = true;
+    // Focus the first input after the modal opens
+    setTimeout(() => {
+      const firstInput = document.getElementById('nombreProductoEdit');
+      if (firstInput) {
+        firstInput.focus();
+      }
+    }, 100);
+  }
+
+  cerrarModalEditarProducto(): void {
+    this.mostrarModalEditarProducto = false;
+    this.editando = null;
+    this.cargandoFormulario = false;
+  }
+
+  abrirModalEliminar(id: number): void {
+    this.productoAEliminar = id;
+    this.mostrarModalEliminar = true;
+  }
+
+  cerrarModalEliminar(): void {
+    this.mostrarModalEliminar = false;
+    this.productoAEliminar = null;
+  }
+
+  confirmarEliminacion(): void {
+    if (this.productoAEliminar !== null) {
+      this.dataService.deleteProducto(this.productoAEliminar);
+      this.mensaje = '🗑️ Producto eliminado exitosamente';
+      this.cerrarModalEliminar();
+      setTimeout(() => this.mensaje = '', 5000);
+    }
+  }
+
+  ngOnInit(): void {
+    this.subscription.add(
+      this.dataService.productos$.subscribe(data => {
+        this.productos = data;
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
+  }
+
+  // Getter para aplicar filtro dinámico en la tabla
   get productosFiltrados(): Producto[] {
-    if (!this.filtro.trim()) {
-      return this.productos;
-    }
     return this.productos.filter(p =>
-      p.nombre.toLowerCase().includes(this.filtro.toLowerCase())
+      p.nombre.toLowerCase().includes(this.filtroNombre.toLowerCase())
     );
   }
 
-  // TrackBy function para mejorar el rendimiento de *ngFor
-  trackByProductoId(index: number, producto: Producto): number {
-    return producto.idProducto;
-  }
+  // Agregar nuevo producto
+  agregarProducto(): void {
+    if (this.cargandoFormulario) return;
 
-  // Limpiar filtro de búsqueda
-  limpiarFiltro() {
-    this.filtro = '';
-  }
-
-  // Mostrar mensajes temporales
-  private mostrarMensaje(texto: string, tipo: 'success' | 'error' = 'success') {
-    this.mensaje = texto;
-    this.tipoMensaje = tipo;
-
-    // Limpiar timeout anterior si existe
-    if (this.timeoutMensaje) {
-      clearTimeout(this.timeoutMensaje);
-    }
-
-    // Auto-ocultar después de 4 segundos
-    this.timeoutMensaje = setTimeout(() => {
-      this.mensaje = '';
-    }, 4000);
-  }
-
-  // Abrir modal para nuevo producto
-  nuevoProducto() {
-    this.mostrarModal = true;
-    this.modoEdicion = false;
-    this.nombre = '';
-    this.nombreError = '';
-    this.productoSeleccionado = null;
-    
-    // Auto-focus después de que el modal se renderice
-    setTimeout(() => {
-      if (this.nombreInput) {
-        this.nombreInput.nativeElement.focus();
-      }
-    }, 100);
-  }
-
-  // Abrir modal para editar producto
-  editarProducto(producto: Producto) {
-    this.mostrarModal = true;
-    this.modoEdicion = true;
-    this.nombre = producto.nombre;
-    this.nombreError = '';
-    this.productoSeleccionado = producto;
-    
-    // Auto-focus y seleccionar texto
-    setTimeout(() => {
-      if (this.nombreInput) {
-        this.nombreInput.nativeElement.focus();
-        this.nombreInput.nativeElement.select();
-      }
-    }, 100);
-  }
-
-  // Validar nombre del producto
-  private validarNombre(): boolean {
-    this.nombreError = '';
-    
-    if (!this.nombre.trim()) {
-      this.nombreError = 'El nombre del producto es obligatorio';
-      return false;
-    }
-
-    if (this.nombre.trim().length < 2) {
-      this.nombreError = 'El nombre debe tener al menos 2 caracteres';
-      return false;
-    }
-
-    if (this.nombre.trim().length > 100) {
-      this.nombreError = 'El nombre no puede exceder 100 caracteres';
-      return false;
-    }
-
-    // Verificar si ya existe un producto con ese nombre (excepto el que se está editando)
-    const nombreExistente = this.productos.find(p => 
-      p.nombre.toLowerCase().trim() === this.nombre.toLowerCase().trim() &&
-      (!this.modoEdicion || p.idProducto !== this.productoSeleccionado?.idProducto)
-    );
-
-    if (nombreExistente) {
-      this.nombreError = 'Ya existe un producto con este nombre';
-      return false;
-    }
-
-    return true;
-  }
-
-  // Guardar producto (crear/editar)
-  guardarProducto() {
-    if (!this.validarNombre()) {
+    // Validación básica
+    if (!this.nuevoProducto.nombre || !this.nuevoProducto.nombre.trim()) {
+      this.mensaje = '⚠️ El nombre es obligatorio';
+      setTimeout(() => this.mensaje = '', 5000);
       return;
     }
 
-    const nombreLimpio = this.nombre.trim();
+    if (this.nuevoProducto.nombre.trim().length < 3) {
+      this.mensaje = '⚠️ El nombre debe tener al menos 3 caracteres';
+      setTimeout(() => this.mensaje = '', 5000);
+      return;
+    }
+
+    // Check if name already exists
+    const nombreExiste = this.productos.some(producto => 
+      producto.nombre.toLowerCase() === this.nuevoProducto.nombre.trim().toLowerCase()
+    );
+
+    if (nombreExiste) {
+      this.mensaje = '⚠️ Ya existe un producto con ese nombre';
+      setTimeout(() => this.mensaje = '', 5000);
+      return;
+    }
+
+    this.cargandoFormulario = true;
 
     try {
-      if (this.modoEdicion && this.productoSeleccionado) {
-        // Actualizar producto existente
-        this.dataService.updateProducto({
-          ...this.productoSeleccionado,
-          nombre: nombreLimpio
-        });
-        this.mostrarMensaje(`Producto "${nombreLimpio}" actualizado correctamente`, 'success');
+      // Agregar producto directamente
+      const resultado = this.dataService.addProducto({
+        nombre: this.nuevoProducto.nombre.trim()
+      });
+
+      if (resultado) {
+        this.nuevoProducto = { idProducto: 0, nombre: '' };
+        this.mensaje = '✅ Producto creado exitosamente';
+        this.cerrarModalNuevoProducto();
+        setTimeout(() => this.mensaje = '', 5000);
       } else {
-        // Crear nuevo producto
-        this.dataService.addProducto({ nombre: nombreLimpio });
-        this.mostrarMensaje(`Producto "${nombreLimpio}" creado correctamente`, 'success');
+        this.mensaje = '❌ Error al crear el producto';
+        setTimeout(() => this.mensaje = '', 5000);
       }
-
-      this.cerrarModal();
     } catch (error) {
-      this.mostrarMensaje('Error al guardar el producto', 'error');
-      console.error('Error al guardar producto:', error);
+      this.mensaje = '❌ Error al crear el producto';
+      setTimeout(() => this.mensaje = '', 5000);
+    } finally {
+      this.cargandoFormulario = false;
     }
   }
 
-  // Mostrar modal de confirmación para eliminación
-  confirmarEliminacion(producto: Producto) {
-    this.productoAEliminar = producto;
-    this.mostrarModalConfirmacion = true;
+  // Preparar edición
+  editarProducto(producto: Producto): void {
+    this.abrirModalEditarProducto(producto);
   }
 
-  // Cancelar eliminación
-  cancelarEliminacion() {
-    this.productoAEliminar = null;
-    this.mostrarModalConfirmacion = false;
-  }
+  // Guardar cambios de edición
+  guardarEdicion(): void {
+    if (!this.editando || this.cargandoFormulario) return;
 
-  // Confirmar eliminación definitiva
-  confirmarEliminacionDefinitiva() {
-    if (this.productoAEliminar) {
-      try {
-        const nombreProducto = this.productoAEliminar.nombre;
-        this.dataService.deleteProducto(this.productoAEliminar.idProducto);
-        this.mostrarMensaje(`Producto "${nombreProducto}" eliminado correctamente`, 'success');
-      } catch (error) {
-        this.mostrarMensaje('Error al eliminar el producto', 'error');
-        console.error('Error al eliminar producto:', error);
+    // Validación básica
+    if (!this.editando.nombre || !this.editando.nombre.trim()) {
+      this.mensaje = '⚠️ El nombre es obligatorio';
+      setTimeout(() => this.mensaje = '', 5000);
+      return;
+    }
+
+    if (this.editando.nombre.trim().length < 3) {
+      this.mensaje = '⚠️ El nombre debe tener al menos 3 caracteres';
+      setTimeout(() => this.mensaje = '', 5000);
+      return;
+    }
+
+    // Check if name already exists (excluding current item)
+    const nombreExiste = this.productos.some(producto => 
+      producto.idProducto !== this.editando!.idProducto &&
+      producto.nombre.toLowerCase() === this.editando!.nombre.trim().toLowerCase()
+    );
+
+    if (nombreExiste) {
+      this.mensaje = '⚠️ Ya existe un producto con ese nombre';
+      setTimeout(() => this.mensaje = '', 5000);
+      return;
+    }
+
+    this.cargandoFormulario = true;
+
+    try {
+      // Actualizar producto directamente
+      const resultado = this.dataService.updateProducto({
+        ...this.editando,
+        nombre: this.editando.nombre.trim()
+      });
+
+      if (resultado) {
+        this.mensaje = '✅ Producto actualizado exitosamente';
+        this.cerrarModalEditarProducto();
+        setTimeout(() => this.mensaje = '', 5000);
+      } else {
+        this.mensaje = '❌ Error al actualizar el producto';
+        setTimeout(() => this.mensaje = '', 5000);
       }
-    }
-    this.cancelarEliminacion();
-  }
-
-  // Cerrar modal de producto
-  cerrarModal() {
-    this.mostrarModal = false;
-    this.nombre = '';
-    this.nombreError = '';
-    this.productoSeleccionado = null;
-  }
-
-  // Método para cerrar mensajes manualmente
-  cerrarMensaje() {
-    this.mensaje = '';
-    if (this.timeoutMensaje) {
-      clearTimeout(this.timeoutMensaje);
+    } catch (error) {
+      this.mensaje = '❌ Error al actualizar el producto';
+      setTimeout(() => this.mensaje = '', 5000);
+    } finally {
+      this.cargandoFormulario = false;
     }
   }
 
-  // Cleanup al destruir el componente
-  ngOnDestroy() {
-    if (this.timeoutMensaje) {
-      clearTimeout(this.timeoutMensaje);
-    }
+  // Cancelar edición
+  cancelarEdicion(): void {
+    this.cerrarModalEditarProducto();
+    this.mensaje = 'Edición cancelada';
+    setTimeout(() => this.mensaje = '', 3000);
+  }
+
+  // Eliminar producto
+  eliminarProducto(id: number): void {
+    this.abrirModalEliminar(id);
+  }
+
+  // TrackBy function for better performance
+  trackByProducto(index: number, producto: Producto): number {
+    return producto.idProducto;
   }
 }
