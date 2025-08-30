@@ -1,8 +1,9 @@
-import { Component, OnInit, inject, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../data.service';
 import { Proveedor } from '../interfaces';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-proveedores',
@@ -11,8 +12,9 @@ import { Proveedor } from '../interfaces';
   templateUrl: './proveedores.component.html',
   styleUrls: ['./proveedores.component.css']
 })
-export class ProveedoresComponent implements OnInit {
+export class ProveedoresComponent implements OnInit, OnDestroy {
   private dataService = inject(DataService);
+  private subscription = new Subscription();
 
   proveedores: Proveedor[] = [];
   nuevoProveedor: Proveedor = { idProveedor: 0, nombre: '' };
@@ -93,9 +95,15 @@ export class ProveedoresComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.dataService.proveedores$.subscribe(data => {
-      this.proveedores = data;
-    });
+    this.subscription.add(
+      this.dataService.proveedores$.subscribe(data => {
+        this.proveedores = data;
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
   }
 
   // Getter para aplicar filtro dinámico en la tabla
@@ -109,13 +117,14 @@ export class ProveedoresComponent implements OnInit {
   agregarProveedor(): void {
     if (this.cargandoFormulario) return;
 
-    if (!this.nuevoProveedor.nombre.trim()) {
+    // Validación básica
+    if (!this.nuevoProveedor.nombre || !this.nuevoProveedor.nombre.trim()) {
       this.mensaje = '⚠️ El nombre es obligatorio';
       setTimeout(() => this.mensaje = '', 5000);
       return;
     }
 
-    if (this.nuevoProveedor.nombre.length < 3) {
+    if (this.nuevoProveedor.nombre.trim().length < 3) {
       this.mensaje = '⚠️ El nombre debe tener al menos 3 caracteres';
       setTimeout(() => this.mensaje = '', 5000);
       return;
@@ -123,7 +132,7 @@ export class ProveedoresComponent implements OnInit {
 
     // Check if name already exists
     const nombreExiste = this.proveedores.some(proveedor => 
-      proveedor.nombre.toLowerCase() === this.nuevoProveedor.nombre.toLowerCase()
+      proveedor.nombre.toLowerCase() === this.nuevoProveedor.nombre.trim().toLowerCase()
     );
 
     if (nombreExiste) {
@@ -134,18 +143,27 @@ export class ProveedoresComponent implements OnInit {
 
     this.cargandoFormulario = true;
 
-    // Simulate async operation for better UX
-    setTimeout(() => {
-      this.dataService.addProveedor({
+    try {
+      // Agregar proveedor directamente
+      const resultado = this.dataService.addProveedor({
         nombre: this.nuevoProveedor.nombre.trim()
       });
 
-      this.nuevoProveedor = { idProveedor: 0, nombre: '' };
-      this.mensaje = '✅ Proveedor creado exitosamente';
-      this.cargandoFormulario = false;
-      this.cerrarModalNuevoProveedor();
+      if (resultado) {
+        this.nuevoProveedor = { idProveedor: 0, nombre: '' };
+        this.mensaje = '✅ Proveedor creado exitosamente';
+        this.cerrarModalNuevoProveedor();
+        setTimeout(() => this.mensaje = '', 5000);
+      } else {
+        this.mensaje = '❌ Error al crear el proveedor';
+        setTimeout(() => this.mensaje = '', 5000);
+      }
+    } catch (error) {
+      this.mensaje = '❌ Error al crear el proveedor';
       setTimeout(() => this.mensaje = '', 5000);
-    }, 500);
+    } finally {
+      this.cargandoFormulario = false;
+    }
   }
 
   // Preparar edición
@@ -157,13 +175,14 @@ export class ProveedoresComponent implements OnInit {
   guardarEdicion(): void {
     if (!this.editando || this.cargandoFormulario) return;
 
-    if (!this.editando.nombre.trim()) {
+    // Validación básica
+    if (!this.editando.nombre || !this.editando.nombre.trim()) {
       this.mensaje = '⚠️ El nombre es obligatorio';
       setTimeout(() => this.mensaje = '', 5000);
       return;
     }
 
-    if (this.editando.nombre.length < 3) {
+    if (this.editando.nombre.trim().length < 3) {
       this.mensaje = '⚠️ El nombre debe tener al menos 3 caracteres';
       setTimeout(() => this.mensaje = '', 5000);
       return;
@@ -172,7 +191,7 @@ export class ProveedoresComponent implements OnInit {
     // Check if name already exists (excluding current item)
     const nombreExiste = this.proveedores.some(proveedor => 
       proveedor.idProveedor !== this.editando!.idProveedor &&
-      proveedor.nombre.toLowerCase() === this.editando!.nombre.toLowerCase()
+      proveedor.nombre.toLowerCase() === this.editando!.nombre.trim().toLowerCase()
     );
 
     if (nombreExiste) {
@@ -183,17 +202,27 @@ export class ProveedoresComponent implements OnInit {
 
     this.cargandoFormulario = true;
 
-    // Simulate async operation for better UX
-    setTimeout(() => {
-      this.dataService.updateProveedor({
-        ...this.editando!,
-        nombre: this.editando!.nombre.trim()
+    try {
+      // Actualizar proveedor directamente
+      const resultado = this.dataService.updateProveedor({
+        ...this.editando,
+        nombre: this.editando.nombre.trim()
       });
-      this.mensaje = '✅ Proveedor actualizado exitosamente';
-      this.cargandoFormulario = false;
-      this.cerrarModalEditarProveedor();
+
+      if (resultado) {
+        this.mensaje = '✅ Proveedor actualizado exitosamente';
+        this.cerrarModalEditarProveedor();
+        setTimeout(() => this.mensaje = '', 5000);
+      } else {
+        this.mensaje = '❌ Error al actualizar el proveedor';
+        setTimeout(() => this.mensaje = '', 5000);
+      }
+    } catch (error) {
+      this.mensaje = '❌ Error al actualizar el proveedor';
       setTimeout(() => this.mensaje = '', 5000);
-    }, 500);
+    } finally {
+      this.cargandoFormulario = false;
+    }
   }
 
   // Cancelar edición

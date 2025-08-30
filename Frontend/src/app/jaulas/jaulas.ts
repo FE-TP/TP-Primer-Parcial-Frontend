@@ -1,8 +1,9 @@
-import { Component, OnInit, inject, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../data.service';
 import { Jaula } from '../interfaces';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-jaulas',
@@ -11,8 +12,9 @@ import { Jaula } from '../interfaces';
   templateUrl: './jaulas.html',
   styleUrls: ['./jaulas.css']
 })
-export class JaulasComponent implements OnInit {
+export class JaulasComponent implements OnInit, OnDestroy {
   private dataService = inject(DataService);
+  private subscription = new Subscription();
 
   jaulas: Jaula[] = [];
   nuevaJaula: Jaula = { idJaula: 0, nombre: '', enUso: 'N' };
@@ -93,9 +95,15 @@ export class JaulasComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.dataService.jaulas$.subscribe(data => {
-      this.jaulas = data;
-    });
+    this.subscription.add(
+      this.dataService.jaulas$.subscribe(data => {
+        this.jaulas = data;
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
   }
 
   // Getter para aplicar filtro dinámico en la tabla
@@ -109,13 +117,14 @@ export class JaulasComponent implements OnInit {
   agregarJaula(): void {
     if (this.cargandoFormulario) return;
 
-    if (!this.nuevaJaula.nombre.trim()) {
+    // Validación básica
+    if (!this.nuevaJaula.nombre || !this.nuevaJaula.nombre.trim()) {
       this.mensaje = '⚠️ El nombre es obligatorio';
       setTimeout(() => this.mensaje = '', 5000);
       return;
     }
 
-    if (this.nuevaJaula.nombre.length < 3) {
+    if (this.nuevaJaula.nombre.trim().length < 3) {
       this.mensaje = '⚠️ El nombre debe tener al menos 3 caracteres';
       setTimeout(() => this.mensaje = '', 5000);
       return;
@@ -123,7 +132,7 @@ export class JaulasComponent implements OnInit {
 
     // Check if name already exists
     const nombreExiste = this.jaulas.some(jaula => 
-      jaula.nombre.toLowerCase() === this.nuevaJaula.nombre.toLowerCase()
+      jaula.nombre.toLowerCase() === this.nuevaJaula.nombre.trim().toLowerCase()
     );
 
     if (nombreExiste) {
@@ -134,19 +143,28 @@ export class JaulasComponent implements OnInit {
 
     this.cargandoFormulario = true;
 
-    // Simulate async operation for better UX
-    setTimeout(() => {
-      this.dataService.addJaula({
+    try {
+      // Agregar jaula directamente
+      const resultado = this.dataService.addJaula({
         nombre: this.nuevaJaula.nombre.trim(),
-        enUso: this.nuevaJaula.enUso
+        enUso: this.nuevaJaula.enUso || 'N'
       });
 
-      this.nuevaJaula = { idJaula: 0, nombre: '', enUso: 'N' };
-      this.mensaje = '✅ Jaula creada exitosamente';
-      this.cargandoFormulario = false;
-      this.cerrarModalNuevaJaula();
+      if (resultado) {
+        this.nuevaJaula = { idJaula: 0, nombre: '', enUso: 'N' };
+        this.mensaje = '✅ Jaula creada exitosamente';
+        this.cerrarModalNuevaJaula();
+        setTimeout(() => this.mensaje = '', 5000);
+      } else {
+        this.mensaje = '❌ Error al crear la jaula';
+        setTimeout(() => this.mensaje = '', 5000);
+      }
+    } catch (error) {
+      this.mensaje = '❌ Error al crear la jaula';
       setTimeout(() => this.mensaje = '', 5000);
-    }, 500);
+    } finally {
+      this.cargandoFormulario = false;
+    }
   }
 
   // Preparar edición
@@ -158,13 +176,14 @@ export class JaulasComponent implements OnInit {
   guardarEdicion(): void {
     if (!this.editando || this.cargandoFormulario) return;
 
-    if (!this.editando.nombre.trim()) {
+    // Validación básica
+    if (!this.editando.nombre || !this.editando.nombre.trim()) {
       this.mensaje = '⚠️ El nombre es obligatorio';
       setTimeout(() => this.mensaje = '', 5000);
       return;
     }
 
-    if (this.editando.nombre.length < 3) {
+    if (this.editando.nombre.trim().length < 3) {
       this.mensaje = '⚠️ El nombre debe tener al menos 3 caracteres';
       setTimeout(() => this.mensaje = '', 5000);
       return;
@@ -173,7 +192,7 @@ export class JaulasComponent implements OnInit {
     // Check if name already exists (excluding current item)
     const nombreExiste = this.jaulas.some(jaula => 
       jaula.idJaula !== this.editando!.idJaula &&
-      jaula.nombre.toLowerCase() === this.editando!.nombre.toLowerCase()
+      jaula.nombre.toLowerCase() === this.editando!.nombre.trim().toLowerCase()
     );
 
     if (nombreExiste) {
@@ -184,17 +203,27 @@ export class JaulasComponent implements OnInit {
 
     this.cargandoFormulario = true;
 
-    // Simulate async operation for better UX
-    setTimeout(() => {
-      this.dataService.updateJaula({
-        ...this.editando!,
-        nombre: this.editando!.nombre.trim()
+    try {
+      // Actualizar jaula directamente
+      const resultado = this.dataService.updateJaula({
+        ...this.editando,
+        nombre: this.editando.nombre.trim()
       });
-      this.mensaje = '✅ Jaula actualizada exitosamente';
-      this.cargandoFormulario = false;
-      this.cerrarModalEditarJaula();
+
+      if (resultado) {
+        this.mensaje = '✅ Jaula actualizada exitosamente';
+        this.cerrarModalEditarJaula();
+        setTimeout(() => this.mensaje = '', 5000);
+      } else {
+        this.mensaje = '❌ Error al actualizar la jaula';
+        setTimeout(() => this.mensaje = '', 5000);
+      }
+    } catch (error) {
+      this.mensaje = '❌ Error al actualizar la jaula';
       setTimeout(() => this.mensaje = '', 5000);
-    }, 500);
+    } finally {
+      this.cargandoFormulario = false;
+    }
   }
 
   // Cancelar edición

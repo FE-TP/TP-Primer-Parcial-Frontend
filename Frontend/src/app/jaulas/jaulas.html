@@ -29,7 +29,7 @@
 			</button>
 		</div>
 		
-		<form class="enhanced-form" (ngSubmit)="agregarJaula()" novalidate>
+		<form class="enhanced-form" #jaulaForm="ngForm" novalidate>
 			<div class="form-grid">
 				<div class="input-group">
 					<label for="nombreJaula" class="input-label">
@@ -88,7 +88,7 @@
 					</svg>
 					Cancelar
 				</button>
-				<button class="btn btn-success enhanced-btn btn-primary" type="submit" [disabled]="cargandoFormulario">
+				<button class="btn btn-success enhanced-btn btn-primary" type="button" (click)="agregarJaula()" [disabled]="cargandoFormulario">
 					<svg *ngIf="!cargandoFormulario" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 						<path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 					</svg>
@@ -128,7 +128,7 @@
 			</button>
 		</div>
 		
-		<form class="enhanced-form" (ngSubmit)="guardarEdicion()" novalidate>
+		<form class="enhanced-form" #editForm="ngForm" novalidate>
 			<div class="form-grid">
 				<div class="input-group">
 					<label for="nombreJaulaEdit" class="input-label">
@@ -149,7 +149,8 @@
 						maxlength="50"
 						aria-label="Nombre de la jaula"
 						aria-describedby="nombre-edit-hint"
-						autocomplete="off" />
+						autocomplete="off" 
+						*ngIf="editando" />
 					<div id="nombre-edit-hint" class="input-hint">Modifica el nombre de la jaula (mínimo 3 caracteres)</div>
 				</div>
 
@@ -168,7 +169,8 @@
 							[(ngModel)]="editando!.enUso" 
 							name="enUsoEdit" 
 							aria-label="Estado de la jaula"
-							aria-describedby="estado-edit-hint">
+							aria-describedby="estado-edit-hint"
+							*ngIf="editando">
 							<option value="N">🟢 Libre - Disponible para uso</option>
 							<option value="S">🔴 En uso - Ocupada actualmente</option>
 						</select>
@@ -187,7 +189,7 @@
 					</svg>
 					Cancelar
 				</button>
-				<button class="btn btn-warning enhanced-btn btn-warning-custom" type="submit" [disabled]="cargandoFormulario">
+				<button class="btn btn-warning enhanced-btn btn-warning-custom" type="button" (click)="guardarEdicion()" [disabled]="cargandoFormulario">
 					<svg *ngIf="!cargandoFormulario" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 						<path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 					</svg>
