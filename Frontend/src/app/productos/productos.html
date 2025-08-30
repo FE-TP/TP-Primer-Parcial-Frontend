@@ -1,54 +1,153 @@
-<div class="header-container">
-  <h1 class="page-title">Administración de Productos</h1>
-  <button class="btn btn-primary" (click)="nuevoProducto()">➕ Nuevo Producto</button>
-</div>
+<div class="productos-container">
+  <!-- Mensajes de notificación -->
+  <div *ngIf="mensaje" class="alert" [ngClass]="{'alert-success': tipoMensaje === 'success', 'alert-danger': tipoMensaje === 'error'}">
+    <span class="icon-info" *ngIf="tipoMensaje === 'success'">✅</span>
+    <span class="icon-danger" *ngIf="tipoMensaje === 'error'">❌</span>
+    {{ mensaje }}
+  </div>
 
-<div class="table-container">
-  <!-- Filtro -->
-  <input
-    type="text"
-    class="form-control mb-3"
-    placeholder="Buscar producto..."
-    [(ngModel)]="filtro"
-  />
+  <!-- Header -->
+  <div class="header-container">
+    <h1 class="page-title">Administración de Productos</h1>
+    <button class="btn btn-primary" (click)="nuevoProducto()">
+      <span>➕</span>
+      Nuevo Producto
+    </button>
+  </div>
 
-  <!-- Tabla -->
-  <table class="table">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Nombre</th>
-        <th class="text-center">Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let p of productosFiltrados">
-        <td>{{ p.idProducto }}</td>
-        <td>{{ p.nombre }}</td>
-        <td class="text-center">
-          <button class="btn btn-warning me-2" (click)="editarProducto(p)">✏️ Editar</button>
-          <button class="btn btn-danger" (click)="eliminarProducto(p)">🗑️ Eliminar</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
-<!-- Modal -->
-<div class="modal-overlay" *ngIf="mostrarModal">
-  <div class="modal-content">
-    <h2>{{ modoEdicion ? 'Editar Producto' : 'Nuevo Producto' }}</h2>
-
+  <div class="table-container">
+    <!-- Filtro -->
     <input
       type="text"
       class="form-control mb-3"
-      placeholder="Nombre del producto"
-      [(ngModel)]="nombre"
+      placeholder="🔍 Buscar producto por nombre..."
+      [(ngModel)]="filtro"
     />
 
-    <div class="d-flex justify-content-end">
-      <button class="btn btn-success me-2" (click)="guardarProducto()">💾 Guardar</button>
-      <button class="btn btn-danger" (click)="cerrarModal()">❌ Cancelar</button>
+    <!-- Estado vacío -->
+    <div *ngIf="productosFiltrados.length === 0 && filtro === ''" class="empty-state">
+      <div class="empty-state-icon">📦</div>
+      <div class="empty-state-text">No hay productos registrados</div>
+      <button class="btn btn-primary" (click)="nuevoProducto()">
+        <span>➕</span>
+        Crear primer producto
+      </button>
+    </div>
+
+    <!-- No hay resultados de búsqueda -->
+    <div *ngIf="productosFiltrados.length === 0 && filtro !== ''" class="empty-state">
+      <div class="empty-state-icon">🔍</div>
+      <div class="empty-state-text">No se encontraron productos que coincidan con "{{ filtro }}"</div>
+      <button class="btn btn-secondary" (click)="limpiarFiltro()">
+        Limpiar búsqueda
+      </button>
+    </div>
+
+    <!-- Tabla -->
+    <table class="table" *ngIf="productosFiltrados.length > 0">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre del Producto</th>
+          <th class="text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of productosFiltrados; trackBy: trackByProductoId">
+          <td>
+            <span style="font-family: monospace; font-weight: 600; color: var(--gray-600);">
+              #{{ p.idProducto }}
+            </span>
+          </td>
+          <td>
+            <span style="font-weight: 500;">{{ p.nombre }}</span>
+          </td>
+          <td class="text-center">
+            <button 
+              class="btn btn-warning me-2" 
+              (click)="editarProducto(p)"
+              title="Editar producto">
+              <span class="icon-warning">✏️</span>
+              Editar
+            </button>
+            <button 
+              class="btn btn-danger" 
+              (click)="confirmarEliminacion(p)"
+              title="Eliminar producto">
+              <span class="icon-danger">🗑️</span>
+              Eliminar
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal de Producto -->
+  <div class="modal-overlay" *ngIf="mostrarModal">
+    <div class="modal-content">
+      <h2>
+        <span *ngIf="!modoEdicion" class="icon-success">➕</span>
+        <span *ngIf="modoEdicion" class="icon-warning">✏️</span>
+        {{ modoEdicion ? 'Editar Producto' : 'Nuevo Producto' }}
+      </h2>
+
+      <div style="margin-bottom: 1.5rem;">
+        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--gray-700);">
+          Nombre del producto *
+        </label>
+        <input
+          #nombreInput
+          type="text"
+          class="form-control"
+          placeholder="Ingrese el nombre del producto"
+          [(ngModel)]="nombre"
+          (keyup.enter)="guardarProducto()"
+          [style.border-color]="nombreError ? 'var(--danger-color)' : ''"
+        />
+        <small *ngIf="nombreError" style="color: var(--danger-color); margin-top: 0.25rem; display: block;">
+          {{ nombreError }}
+        </small>
+      </div>
+
+      <div class="d-flex justify-content-end" style="gap: 1rem;">
+        <button class="btn btn-secondary" (click)="cerrarModal()">
+          <span>❌</span>
+          Cancelar
+        </button>
+        <button 
+          class="btn btn-success" 
+          (click)="guardarProducto()"
+          [disabled]="!nombre.trim()">
+          <span class="icon-success">💾</span>
+          {{ modoEdicion ? 'Actualizar' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Confirmación de Eliminación -->
+  <div class="modal-overlay confirmation-modal" *ngIf="mostrarModalConfirmacion">
+    <div class="modal-content">
+      <div class="modal-icon icon-danger">🗑️</div>
+      <h3 class="modal-title">¿Confirmar eliminación?</h3>
+      <p class="modal-message">
+        ¿Estás seguro de que deseas eliminar el producto 
+        <strong>"{{ productoAEliminar?.nombre }}"</strong>?
+        <br><br>
+        Esta acción no se puede deshacer.
+      </p>
+      
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="cancelarEliminacion()">
+          <span>❌</span>
+          Cancelar
+        </button>
+        <button class="btn btn-danger" (click)="confirmarEliminacionDefinitiva()">
+          <span class="icon-danger">🗑️</span>
+          Sí, eliminar
+        </button>
+      </div>
     </div>
   </div>
 </div>
