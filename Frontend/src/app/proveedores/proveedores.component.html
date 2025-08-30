@@ -1,8 +1,7 @@
-
 <div class="page-container">
   <!-- Encabezado de página -->
   <div class="header-container">
-    <h1 class="page-title">Administración de Jaulas</h1>
+    <h1 class="page-title">Administración de Proveedores</h1>
   </div>
 
   <!-- Controles: búsqueda + botón principal -->
@@ -15,19 +14,19 @@
         </svg>
         <input 
           class="search-input" 
-          placeholder="Buscar jaulas por nombre..." 
+          placeholder="Buscar proveedores por nombre..." 
           [(ngModel)]="filtroNombre"
-          aria-label="Filtrar jaulas por nombre"
+          aria-label="Filtrar proveedores por nombre"
           autocomplete="off"
         />
       </div>
     </div>
     
-    <button class="btn btn-primary" (click)="abrirModalNuevaJaula()" aria-label="Agregar nueva jaula">
+    <button class="btn btn-primary" (click)="abrirModalNuevoProveedor()" aria-label="Agregar nuevo proveedor">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M8 1V15M1 8H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      Nueva Jaula
+      Nuevo Proveedor
     </button>
   </div>
 
@@ -36,48 +35,39 @@
     {{ mensaje }}
   </div>
 
-  <!-- Tabla de jaulas -->
+  <!-- Tabla de proveedores -->
   <div class="table-container">
     <div class="table-wrapper">
-      <table class="table" role="table" aria-label="Lista de jaulas">
+      <table class="table" role="table" aria-label="Lista de proveedores">
         <thead>
           <tr role="row">
             <!-- ENCABEZADOS SIN ICONOS según las reglas -->
             <th scope="col">ID</th>
             <th scope="col">Nombre</th>
-            <th scope="col">Estado</th>
             <th scope="col" class="actions-column">Acciones</th>
           </tr>
         </thead>
         <tbody>
           <!-- FILAS CON ICONOS según las reglas -->
-          <tr *ngFor="let jaula of jaulasFiltradas" class="table-row" role="row">
+          <tr *ngFor="let proveedor of proveedoresFiltrados; trackBy: trackByProveedor" class="table-row" role="row">
             <td [attr.data-label]="'ID'">
-              <span class="status-chip">{{ jaula.idJaula }}</span>
+              <span class="status-chip">{{ proveedor.idProveedor }}</span>
             </td>
             <td [attr.data-label]="'Nombre'">
               <div class="d-flex align-items-center gap-sm">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M2 3H14C14.5523 3 15 3.44772 15 4V12C15 12.5523 14.5523 13 14 13H2C1.44772 13 1 12.5523 1 12V4C1 3.44772 1.44772 3 2 3Z" stroke="currentColor" stroke-width="1.5"/>
-                  <path d="M5 7H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M8 8C10.2091 8 12 6.20914 12 4C12 1.79086 10.2091 0 8 0C5.79086 0 4 1.79086 4 4C4 6.20914 5.79086 8 8 8Z" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M8 10C3.58172 10 0 13.5817 0 18H16C16 13.5817 12.4183 10 8 10Z" stroke="currentColor" stroke-width="1.5"/>
                 </svg>
-                {{ jaula.nombre }}
+                {{ proveedor.nombre }}
               </div>
-            </td>
-            <td [attr.data-label]="'Estado'">
-              <span class="status-chip" [ngClass]="{
-                'libre': jaula.enUso === 'N',
-                'en-uso': jaula.enUso === 'S'
-              }">
-                {{ jaula.enUso === 'N' ? 'Libre' : 'En uso' }}
-              </span>
             </td>
             <td [attr.data-label]="'Acciones'" class="actions-column">
               <div class="actions-container">
                 <button 
                   class="btn btn-secondary btn-sm" 
-                  (click)="editarJaula(jaula)" 
-                  [attr.aria-label]="'Editar jaula ' + jaula.nombre">
+                  (click)="editarProveedor(proveedor)" 
+                  [attr.aria-label]="'Editar proveedor ' + proveedor.nombre">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M10 1L13 4L5 12H2V9L10 1Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
@@ -85,8 +75,8 @@
                 </button>
                 <button 
                   class="btn btn-danger btn-sm" 
-                  (click)="eliminarJaula(jaula.idJaula)" 
-                  [attr.aria-label]="'Eliminar jaula ' + jaula.nombre">
+                  (click)="eliminarProveedor(proveedor.idProveedor)" 
+                  [attr.aria-label]="'Eliminar proveedor ' + proveedor.nombre">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M1 4H13M5.5 4V2.5C5.5 2.22386 5.72386 2 6 2H8C8.27614 2 8.5 2.22386 8.5 2.5V4M2.5 4V11.5C2.5 11.7761 2.72386 12 3 12H11C11.2761 12 11.5 11.7761 11.5 11.5V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
@@ -100,27 +90,27 @@
     </div>
 
     <!-- Información de tabla -->
-    <div *ngIf="jaulasFiltradas.length > 0" class="text-center mt-lg">
+    <div *ngIf="proveedoresFiltrados.length > 0" class="text-center mt-lg">
       <small class="text-tertiary">
-        Mostrando {{ jaulasFiltradas.length }} jaula{{ jaulasFiltradas.length !== 1 ? 's' : '' }}
+        Mostrando {{ proveedoresFiltrados.length }} proveedor{{ proveedoresFiltrados.length !== 1 ? 'es' : '' }}
       </small>
     </div>
   </div>
 
   <!-- Estado vacío -->
-  <div *ngIf="jaulasFiltradas.length === 0" class="text-center mt-xl">
-    <h3 class="subsection-title">No se encontraron jaulas</h3>
-    <p class="text-tertiary">Prueba ajustando los filtros de búsqueda o crea una nueva jaula.</p>
+  <div *ngIf="proveedoresFiltrados.length === 0" class="text-center mt-xl">
+    <h3 class="subsection-title">No se encontraron proveedores</h3>
+    <p class="text-tertiary">Prueba ajustando los filtros de búsqueda o crea un nuevo proveedor.</p>
   </div>
 </div>
 
-<!-- Modal para nueva jaula -->
-<div class="modal-backdrop" *ngIf="mostrarModalNuevaJaula" (click)="$event.target === $event.currentTarget && cerrarModalNuevaJaula()" 
+<!-- Modal para nuevo proveedor -->
+<div class="modal-backdrop" *ngIf="mostrarModalNuevoProveedor" (click)="$event.target === $event.currentTarget && cerrarModalNuevoProveedor()" 
      role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
   <div class="modal-container" role="document">
     <div class="modal-header">
-      <h2 id="modal-title" class="modal-title">Nueva Jaula</h2>
-      <button class="modal-close" type="button" (click)="cerrarModalNuevaJaula()" aria-label="Cerrar modal">
+      <h2 id="modal-title" class="modal-title">Nuevo Proveedor</h2>
+      <button class="modal-close" type="button" (click)="cerrarModalNuevoProveedor()" aria-label="Cerrar modal">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -128,52 +118,37 @@
     </div>
     
     <div class="modal-body">
-      <form class="form-container" #jaulaForm="ngForm" novalidate>
+      <form class="form-container" #proveedorForm="ngForm" novalidate>
         <div class="form-grid">
           <div class="input-group">
-            <label for="nombreJaula" class="input-label">
-              Nombre de la jaula *
+            <label for="nombreProveedor" class="input-label">
+              Nombre del proveedor *
             </label>
             <input 
-              id="nombreJaula" 
+              id="nombreProveedor" 
               class="form-input" 
-              placeholder="Ej: Jaula Principal A" 
-              [(ngModel)]="nuevaJaula.nombre" 
+              placeholder="Ej: Distribuidora ABC S.A." 
+              [(ngModel)]="nuevoProveedor.nombre" 
               name="nombre" 
               required 
               minlength="3"
-              maxlength="50"
-              aria-label="Nombre de la jaula"
+              maxlength="100"
+              aria-label="Nombre del proveedor"
               autocomplete="off"
             />
-          </div>
-          
-          <div class="input-group">
-            <label for="estadoJaula" class="input-label">
-              Estado inicial
-            </label>
-            <select 
-              id="estadoJaula" 
-              class="form-select" 
-              [(ngModel)]="nuevaJaula.enUso" 
-              name="enUso" 
-              aria-label="Estado de la jaula">
-              <option value="N">Libre - Disponible para uso</option>
-              <option value="S">En uso - Ocupada actualmente</option>
-            </select>
           </div>
         </div>
         
         <div class="form-actions">
-          <button type="button" class="btn btn-secondary" (click)="cerrarModalNuevaJaula()">
+          <button type="button" class="btn btn-secondary" (click)="cerrarModalNuevoProveedor()">
             Cancelar
           </button>
           <button 
             type="submit" 
             class="btn btn-primary" 
-            (click)="agregarJaula()" 
-            [disabled]="!jaulaForm.valid || cargandoFormulario">
-            {{ cargandoFormulario ? 'Creando...' : 'Crear Jaula' }}
+            (click)="agregarProveedor()" 
+            [disabled]="!proveedorForm.valid || cargandoFormulario">
+            {{ cargandoFormulario ? 'Creando...' : 'Crear Proveedor' }}
           </button>
         </div>
       </form>
@@ -181,13 +156,13 @@
   </div>
 </div>
 
-<!-- Modal para editar jaula -->
-<div class="modal-backdrop" *ngIf="mostrarModalEditarJaula" (click)="$event.target === $event.currentTarget && cerrarModalEditarJaula()" 
+<!-- Modal para editar proveedor -->
+<div class="modal-backdrop" *ngIf="mostrarModalEditarProveedor" (click)="$event.target === $event.currentTarget && cerrarModalEditarProveedor()" 
      role="dialog" aria-modal="true" aria-labelledby="modal-edit-title" tabindex="-1">
   <div class="modal-container" role="document">
     <div class="modal-header">
-      <h2 id="modal-edit-title" class="modal-title">Editar Jaula</h2>
-      <button class="modal-close" type="button" (click)="cerrarModalEditarJaula()" aria-label="Cerrar modal">
+      <h2 id="modal-edit-title" class="modal-title">Editar Proveedor</h2>
+      <button class="modal-close" type="button" (click)="cerrarModalEditarProveedor()" aria-label="Cerrar modal">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -198,43 +173,27 @@
       <form class="form-container" #editForm="ngForm" novalidate>
         <div class="form-grid">
           <div class="input-group">
-            <label for="nombreJaulaEdit" class="input-label">
-              Nombre de la jaula *
+            <label for="nombreProveedorEdit" class="input-label">
+              Nombre del proveedor *
             </label>
             <input 
-              id="nombreJaulaEdit" 
+              id="nombreProveedorEdit" 
               class="form-input" 
-              placeholder="Ej: Jaula Principal A" 
+              placeholder="Ej: Distribuidora ABC S.A." 
               [(ngModel)]="editando!.nombre" 
               name="nombreEdit" 
               required 
               minlength="3"
-              maxlength="50"
-              aria-label="Nombre de la jaula"
+              maxlength="100"
+              aria-label="Nombre del proveedor"
               autocomplete="off" 
-              *ngIf="editando" 
+              *ngIf="editando"
             />
-          </div>
-          
-          <div class="input-group">
-            <label for="estadoJaulaEdit" class="input-label">
-              Estado actual
-            </label>
-            <select 
-              id="estadoJaulaEdit" 
-              class="form-select" 
-              [(ngModel)]="editando!.enUso" 
-              name="enUsoEdit" 
-              aria-label="Estado de la jaula"
-              *ngIf="editando">
-              <option value="N">Libre - Disponible para uso</option>
-              <option value="S">En uso - Ocupada actualmente</option>
-            </select>
           </div>
         </div>
         
         <div class="form-actions">
-          <button type="button" class="btn btn-secondary" (click)="cerrarModalEditarJaula()">
+          <button type="button" class="btn btn-secondary" (click)="cerrarModalEditarProveedor()">
             Cancelar
           </button>
           <button 
@@ -265,7 +224,7 @@
     
     <div class="modal-body">
       <div class="text-center mb-xl">
-        <p>¿Estás seguro de que deseas eliminar esta jaula?</p>
+        <p>¿Estás seguro de que deseas eliminar este proveedor?</p>
         <p class="text-tertiary">Esta acción no se puede deshacer y se perderán todos los datos asociados.</p>
       </div>
 
@@ -274,7 +233,7 @@
           Cancelar
         </button>
         <button type="button" class="btn btn-danger" (click)="confirmarEliminacion()">
-          Eliminar Jaula
+          Eliminar Proveedor
         </button>
       </div>
     </div>

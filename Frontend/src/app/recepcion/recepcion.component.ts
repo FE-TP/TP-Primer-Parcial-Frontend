@@ -86,6 +86,10 @@ export class RecepcionComponent implements OnInit {
     this.jaulaSeleccionada = null;
   }
 
+  seleccionarJaula(idJaula: number): void {
+    this.jaulaSeleccionada = idJaula;
+  }
+
   iniciarRecepcion(): void {
     if (!this.turnoParaIniciar || !this.jaulaSeleccionada) {
       alert('Debe seleccionar una jaula.');
@@ -144,5 +148,21 @@ export class RecepcionComponent implements OnInit {
 
   getTotalProductos(detalles: DetalleTurno[]): number {
     return detalles.reduce((total, detalle) => total + detalle.cantidad, 0);
+  }
+
+  // Método para obtener la clase del chip de estado (sistema unificado)
+  getEstadoChipClass(estado: string): string {
+    switch (estado) {
+      case 'AGENDADO':
+        return 'agendado';
+      case 'EN_RECEPCION':
+        return 'en-recepcion';
+      case 'FINALIZADO':
+        return 'finalizado';
+      case 'CANCELADO':
+        return 'cancelado';
+      default:
+        return '';
+    }
   }
 }

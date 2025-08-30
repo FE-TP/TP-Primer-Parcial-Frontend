@@ -216,8 +216,35 @@ export class DataService {
     const actuales = this.jaulasSubject.getValue();
     const index = actuales.findIndex(j => j.idJaula === jaula.idJaula);
     if (index !== -1) {
-      actuales[index] = { ...jaula };
-      this.jaulasSubject.next([...actuales]);
+      const jaulaAnterior = actuales[index];
+      const nuevasJaulas = [...actuales];
+      nuevasJaulas[index] = { ...jaula };
+      
+      // Si la jaula cambió de "S" (en uso) a "N" (no en uso), actualizar turnos asociados
+      if (jaulaAnterior.enUso === 'S' && jaula.enUso === 'N') {
+        const turnos = this.turnosSubject.getValue();
+        const turnosActualizados = turnos.map(turno => {
+          if (turno.idJaula === jaula.idJaula) {
+            return {
+              ...turno,
+              idJaula: undefined,
+              jaula: undefined,
+              horaInicioRecepcion: undefined,
+              horaFinRecepcion: undefined,
+              estado: 'AGENDADO' as const
+            };
+          }
+          return turno;
+        });
+        
+        // Actualizar ambos subjects
+        this.jaulasSubject.next(nuevasJaulas);
+        this.turnosSubject.next(turnosActualizados);
+      } else {
+        // Solo actualizar jaulas si no hay cambio de estado crítico
+        this.jaulasSubject.next(nuevasJaulas);
+      }
+      
       return true;
     }
     return false;
@@ -285,5 +312,47 @@ export class DataService {
     return false;
   }
 
+
+  // ============================
+  // CRUD de Proveedores
+  // ============================
+
+  addProveedor(proveedor: Omit<Proveedor, 'idProveedor'>): boolean {
+    const actuales = this.proveedoresSubject.getValue();
+    const nuevo: Proveedor = {
+      idProveedor: actuales.length > 0 ? Math.max(...actuales.map(p => p.idProveedor)) + 1 : 1,
+      ...proveedor
+    };
+    this.proveedoresSubject.next([...actuales, nuevo]);
+    return true;
+  }
+
+  updateProveedor(proveedor: Proveedor): boolean {
+    const actuales = this.proveedoresSubject.getValue();
+    const index = actuales.findIndex(p => p.idProveedor === proveedor.idProveedor);
+    if (index !== -1) {
+      const nuevosProveedores = [...actuales];
+      nuevosProveedores[index] = { ...proveedor };
+      this.proveedoresSubject.next(nuevosProveedores);
+      return true;
+    }
+    return false;
+  }
+
+  deleteProveedor(id: number): boolean {
+    const actuales = this.proveedoresSubject.getValue();
+    const filtrados = actuales.filter(p => p.idProveedor !== id);
+    if (filtrados.length !== actuales.length) {
+      // Actualizar turnos asociados al proveedor eliminado
+      const turnos = this.turnosSubject.getValue();
+      const turnosActualizados = turnos.filter(turno => turno.idProveedor !== id);
+      
+      // Actualizar ambos subjects
+      this.proveedoresSubject.next(filtrados);
+      this.turnosSubject.next(turnosActualizados);
+      return true;
+    }
+    return false;
+  }
 
 }

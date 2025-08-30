@@ -1,0 +1,10 @@
+/* Estilos específicos del componente Proveedores */
+/* Los estilos principales vienen del sistema unificado en design-system.css */
+
+/* Alertas específicas de proveedores si es necesario */
+.alert-proveedor {
+  padding: var(--padding-md);
+  border-radius: var(--border-radius);
+  margin: var(--margin-md) 0;
+  font-size: var(--font-size-sm);
+}

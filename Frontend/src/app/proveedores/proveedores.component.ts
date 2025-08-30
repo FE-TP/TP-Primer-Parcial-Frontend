@@ -2,93 +2,93 @@ import { Component, OnInit, OnDestroy, inject, HostListener } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../data.service';
-import { Jaula } from '../interfaces';
+import { Proveedor } from '../interfaces';
 import { Subscription } from 'rxjs';
 
 @Component({
-  selector: 'app-jaulas',
+  selector: 'app-proveedores',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './jaulas.html',
-  styleUrls: ['./jaulas.css']
+  templateUrl: './proveedores.component.html',
+  styleUrls: ['./proveedores.component.css']
 })
-export class JaulasComponent implements OnInit, OnDestroy {
+export class ProveedoresComponent implements OnInit, OnDestroy {
   private dataService = inject(DataService);
   private subscription = new Subscription();
 
-  jaulas: Jaula[] = [];
-  nuevaJaula: Jaula = { idJaula: 0, nombre: '', enUso: 'N' };
+  proveedores: Proveedor[] = [];
+  nuevoProveedor: Proveedor = { idProveedor: 0, nombre: '' };
   filtroNombre: string = '';
-  editando: Jaula | null = null;
+  editando: Proveedor | null = null;
   mensaje: string = '';
-  mostrarModalNuevaJaula: boolean = false;
-  mostrarModalEditarJaula: boolean = false;
+  mostrarModalNuevoProveedor: boolean = false;
+  mostrarModalEditarProveedor: boolean = false;
   mostrarModalEliminar: boolean = false;
-  jaulaAEliminar: number | null = null;
+  proveedorAEliminar: number | null = null;
   cargandoFormulario: boolean = false;
   
   @HostListener('document:keydown', ['$event'])
   handleKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
-      if (this.mostrarModalNuevaJaula) {
-        this.cerrarModalNuevaJaula();
-      } else if (this.mostrarModalEditarJaula) {
-        this.cerrarModalEditarJaula();
+      if (this.mostrarModalNuevoProveedor) {
+        this.cerrarModalNuevoProveedor();
+      } else if (this.mostrarModalEditarProveedor) {
+        this.cerrarModalEditarProveedor();
       } else if (this.mostrarModalEliminar) {
         this.cerrarModalEliminar();
       }
     }
   }
 
-  abrirModalNuevaJaula(): void {
-    this.nuevaJaula = { idJaula: 0, nombre: '', enUso: 'N' };
-    this.mostrarModalNuevaJaula = true;
+  abrirModalNuevoProveedor(): void {
+    this.nuevoProveedor = { idProveedor: 0, nombre: '' };
+    this.mostrarModalNuevoProveedor = true;
     // Focus the first input after the modal opens
     setTimeout(() => {
-      const firstInput = document.getElementById('nombreJaula');
+      const firstInput = document.getElementById('nombreProveedor');
       if (firstInput) {
         firstInput.focus();
       }
     }, 100);
   }
 
-  cerrarModalNuevaJaula(): void {
-    this.mostrarModalNuevaJaula = false;
+  cerrarModalNuevoProveedor(): void {
+    this.mostrarModalNuevoProveedor = false;
     this.cargandoFormulario = false;
   }
 
-  abrirModalEditarJaula(jaula: Jaula): void {
-    this.editando = { ...jaula };
-    this.mostrarModalEditarJaula = true;
+  abrirModalEditarProveedor(proveedor: Proveedor): void {
+    this.editando = { ...proveedor };
+    this.mostrarModalEditarProveedor = true;
     // Focus the first input after the modal opens
     setTimeout(() => {
-      const firstInput = document.getElementById('nombreJaulaEdit');
+      const firstInput = document.getElementById('nombreProveedorEdit');
       if (firstInput) {
         firstInput.focus();
       }
     }, 100);
   }
 
-  cerrarModalEditarJaula(): void {
-    this.mostrarModalEditarJaula = false;
+  cerrarModalEditarProveedor(): void {
+    this.mostrarModalEditarProveedor = false;
     this.editando = null;
     this.cargandoFormulario = false;
   }
 
   abrirModalEliminar(id: number): void {
-    this.jaulaAEliminar = id;
+    this.proveedorAEliminar = id;
     this.mostrarModalEliminar = true;
   }
 
   cerrarModalEliminar(): void {
     this.mostrarModalEliminar = false;
-    this.jaulaAEliminar = null;
+    this.proveedorAEliminar = null;
   }
 
   confirmarEliminacion(): void {
-    if (this.jaulaAEliminar !== null) {
-      this.dataService.deleteJaula(this.jaulaAEliminar);
-      this.mensaje = '🗑️ Jaula eliminada exitosamente';
+    if (this.proveedorAEliminar !== null) {
+      this.dataService.deleteProveedor(this.proveedorAEliminar);
+      this.mensaje = '🗑️ Proveedor eliminado exitosamente';
       this.cerrarModalEliminar();
       setTimeout(() => this.mensaje = '', 5000);
     }
@@ -96,8 +96,8 @@ export class JaulasComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.subscription.add(
-      this.dataService.jaulas$.subscribe(data => {
-        this.jaulas = data;
+      this.dataService.proveedores$.subscribe(data => {
+        this.proveedores = data;
       })
     );
   }
@@ -107,36 +107,36 @@ export class JaulasComponent implements OnInit, OnDestroy {
   }
 
   // Getter para aplicar filtro dinámico en la tabla
-  get jaulasFiltradas(): Jaula[] {
-    return this.jaulas.filter(j =>
-      j.nombre.toLowerCase().includes(this.filtroNombre.toLowerCase())
+  get proveedoresFiltrados(): Proveedor[] {
+    return this.proveedores.filter(p =>
+      p.nombre.toLowerCase().includes(this.filtroNombre.toLowerCase())
     );
   }
 
-  // Agregar nueva jaula
-  agregarJaula(): void {
+  // Agregar nuevo proveedor
+  agregarProveedor(): void {
     if (this.cargandoFormulario) return;
 
     // Validación básica
-    if (!this.nuevaJaula.nombre || !this.nuevaJaula.nombre.trim()) {
+    if (!this.nuevoProveedor.nombre || !this.nuevoProveedor.nombre.trim()) {
       this.mensaje = '⚠️ El nombre es obligatorio';
       setTimeout(() => this.mensaje = '', 5000);
       return;
     }
 
-    if (this.nuevaJaula.nombre.trim().length < 3) {
+    if (this.nuevoProveedor.nombre.trim().length < 3) {
       this.mensaje = '⚠️ El nombre debe tener al menos 3 caracteres';
       setTimeout(() => this.mensaje = '', 5000);
       return;
     }
 
     // Check if name already exists
-    const nombreExiste = this.jaulas.some(jaula => 
-      jaula.nombre.toLowerCase() === this.nuevaJaula.nombre.trim().toLowerCase()
+    const nombreExiste = this.proveedores.some(proveedor => 
+      proveedor.nombre.toLowerCase() === this.nuevoProveedor.nombre.trim().toLowerCase()
     );
 
     if (nombreExiste) {
-      this.mensaje = '⚠️ Ya existe una jaula con ese nombre';
+      this.mensaje = '⚠️ Ya existe un proveedor con ese nombre';
       setTimeout(() => this.mensaje = '', 5000);
       return;
     }
@@ -144,23 +144,22 @@ export class JaulasComponent implements OnInit, OnDestroy {
     this.cargandoFormulario = true;
 
     try {
-      // Agregar jaula directamente
-      const resultado = this.dataService.addJaula({
-        nombre: this.nuevaJaula.nombre.trim(),
-        enUso: this.nuevaJaula.enUso || 'N'
+      // Agregar proveedor directamente
+      const resultado = this.dataService.addProveedor({
+        nombre: this.nuevoProveedor.nombre.trim()
       });
 
       if (resultado) {
-        this.nuevaJaula = { idJaula: 0, nombre: '', enUso: 'N' };
-        this.mensaje = '✅ Jaula creada exitosamente';
-        this.cerrarModalNuevaJaula();
+        this.nuevoProveedor = { idProveedor: 0, nombre: '' };
+        this.mensaje = '✅ Proveedor creado exitosamente';
+        this.cerrarModalNuevoProveedor();
         setTimeout(() => this.mensaje = '', 5000);
       } else {
-        this.mensaje = '❌ Error al crear la jaula';
+        this.mensaje = '❌ Error al crear el proveedor';
         setTimeout(() => this.mensaje = '', 5000);
       }
     } catch (error) {
-      this.mensaje = '❌ Error al crear la jaula';
+      this.mensaje = '❌ Error al crear el proveedor';
       setTimeout(() => this.mensaje = '', 5000);
     } finally {
       this.cargandoFormulario = false;
@@ -168,8 +167,8 @@ export class JaulasComponent implements OnInit, OnDestroy {
   }
 
   // Preparar edición
-  editarJaula(jaula: Jaula): void {
-    this.abrirModalEditarJaula(jaula);
+  editarProveedor(proveedor: Proveedor): void {
+    this.abrirModalEditarProveedor(proveedor);
   }
 
   // Guardar cambios de edición
@@ -190,13 +189,13 @@ export class JaulasComponent implements OnInit, OnDestroy {
     }
 
     // Check if name already exists (excluding current item)
-    const nombreExiste = this.jaulas.some(jaula => 
-      jaula.idJaula !== this.editando!.idJaula &&
-      jaula.nombre.toLowerCase() === this.editando!.nombre.trim().toLowerCase()
+    const nombreExiste = this.proveedores.some(proveedor => 
+      proveedor.idProveedor !== this.editando!.idProveedor &&
+      proveedor.nombre.toLowerCase() === this.editando!.nombre.trim().toLowerCase()
     );
 
     if (nombreExiste) {
-      this.mensaje = '⚠️ Ya existe una jaula con ese nombre';
+      this.mensaje = '⚠️ Ya existe un proveedor con ese nombre';
       setTimeout(() => this.mensaje = '', 5000);
       return;
     }
@@ -204,22 +203,22 @@ export class JaulasComponent implements OnInit, OnDestroy {
     this.cargandoFormulario = true;
 
     try {
-      // Actualizar jaula directamente
-      const resultado = this.dataService.updateJaula({
+      // Actualizar proveedor directamente
+      const resultado = this.dataService.updateProveedor({
         ...this.editando,
         nombre: this.editando.nombre.trim()
       });
 
       if (resultado) {
-        this.mensaje = '✅ Jaula actualizada exitosamente';
-        this.cerrarModalEditarJaula();
+        this.mensaje = '✅ Proveedor actualizado exitosamente';
+        this.cerrarModalEditarProveedor();
         setTimeout(() => this.mensaje = '', 5000);
       } else {
-        this.mensaje = '❌ Error al actualizar la jaula';
+        this.mensaje = '❌ Error al actualizar el proveedor';
         setTimeout(() => this.mensaje = '', 5000);
       }
     } catch (error) {
-      this.mensaje = '❌ Error al actualizar la jaula';
+      this.mensaje = '❌ Error al actualizar el proveedor';
       setTimeout(() => this.mensaje = '', 5000);
     } finally {
       this.cargandoFormulario = false;
@@ -228,13 +227,18 @@ export class JaulasComponent implements OnInit, OnDestroy {
 
   // Cancelar edición
   cancelarEdicion(): void {
-    this.cerrarModalEditarJaula();
+    this.cerrarModalEditarProveedor();
     this.mensaje = 'Edición cancelada';
     setTimeout(() => this.mensaje = '', 3000);
   }
 
-  // Eliminar jaula
-  eliminarJaula(id: number): void {
+  // Eliminar proveedor
+  eliminarProveedor(id: number): void {
     this.abrirModalEliminar(id);
+  }
+
+  // TrackBy function for better performance
+  trackByProveedor(index: number, proveedor: Proveedor): number {
+    return proveedor.idProveedor;
   }
 }
