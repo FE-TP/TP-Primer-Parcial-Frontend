@@ -35,7 +35,7 @@ cd TP-Primer-Parcial-Frontend
 ```
 Construir imágenes y levantar servicios:
 ```bash
-docker compose up --build
+docker compose up --build -d
 ```
 Abrir la aplicación en el navegador:
 ```bash
