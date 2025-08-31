@@ -1,0 +1,102 @@
+<div class="page">
+    <h1>Reserva de turnos</h1>
+
+    <form [formGroup]="form" class="card">
+        <div class="row">
+            <label>Fecha</label>
+            <input type="date" formControlName="fecha" />
+        </div>
+
+        <div class="row">
+            <label>Hora inicio</label>
+            <select formControlName="horaInicioAgendamiento">
+                <option [ngValue]="''" disabled>Seleccione…</option>
+                <option *ngFor="let h of timeSlots" [value]="h">{{ h }}</option>
+            </select>
+        </div>
+
+        <div class="row">
+            <label>Hora fin</label>
+            <select formControlName="horaFinAgendamiento">
+                <option [ngValue]="''" disabled>Seleccione…</option>
+                <option *ngFor="let h of timeSlots" [value]="h">{{ h }}</option>
+            </select>
+        </div>
+
+        <div class="row">
+            <label>Proveedor</label>
+            <select formControlName="idProveedor">
+                <option [ngValue]="null" disabled>Seleccione…</option>
+                <option *ngFor="let p of proveedores()" [value]="p.idProveedor">{{ p.nombre }}</option>
+            </select>
+        </div>
+
+        <div class="divider"></div>
+
+        <h3>Productos del turno</h3>
+        <div formArrayName="detalles" class="stack">
+            <div class="detalle" *ngFor="let d of detalles.controls; let i = index" [formGroupName]="i">
+                <select formControlName="idProducto" class="w-220">
+                    <option [ngValue]="null" disabled>Producto…</option>
+                    <option *ngFor="let pr of productos()" [value]="pr.idProducto">{{ pr.nombre }}</option>
+                </select>
+
+                <input type="number" min="1" formControlName="cantidad" class="w-100" placeholder="Cantidad" />
+
+                <button type="button" class="btn-secondary" (click)="removeDetalle(i)"
+                    [disabled]="detalles.length === 1">Quitar</button>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button type="button" class="btn-secondary" (click)="addDetalle()">+ Agregar producto</button>
+            <span class="spacer"></span>
+            <button type="button" class="btn-primary" (click)="crearTurno()"
+                [disabled]="form.invalid || horasInvalidas">
+                Guardar reserva
+            </button>
+        </div>
+
+        <div class="errors" *ngIf="form.touched">
+            <p *ngIf="form.invalid">Completa los campos requeridos.</p>
+            <p *ngIf="horasInvalidas">La hora de inicio debe ser menor a la hora de fin.</p>
+        </div>
+    </form>
+
+    <h2>Reservas creadas</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Fecha</th>
+                <th>Inicio</th>
+                <th>Fin</th>
+                <th>Proveedor</th>
+                <th>Detalles</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let t of turnos()">
+                <td>{{ t.idTurno }}</td>
+                <td>{{ t.fecha }}</td>
+                <td>{{ t.horaInicioAgendamiento }}</td>
+                <td>{{ t.horaFinAgendamiento }}</td>
+                <td>{{ nombreProveedor(t.idProveedor) }}</td>
+                <td>
+                    <ul class="chips">
+                        <li *ngFor="let d of t.detalles">
+                            {{ nombreProducto(d.idProducto) }} × {{ d.cantidad }}
+                        </li>
+                    </ul>
+                </td>
+                <td class="right">
+                    <button class="btn-danger" (click)="eliminarTurno(t.idTurno)">Eliminar</button>
+                </td>
+            </tr>
+            <tr *ngIf="turnos().length === 0">
+                <td colspan="7" class="muted">Aún no hay reservas.</td>
+            </tr>
+        </tbody>
+    </table>
+</div>

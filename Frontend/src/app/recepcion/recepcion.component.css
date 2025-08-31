@@ -1,0 +1,28 @@
+/* Estilos específicos del componente Recepción */
+/* Los estilos principales vienen del sistema unificado en design-system.css */
+
+/* Alertas y notificaciones específicas del módulo */
+.alert-recepcion {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin: 16px 0;
+  border-left: 4px solid;
+}
+
+.alert-recepcion.success {
+  background-color: #f0f9f0;
+  border-left-color: #4caf50;
+  color: #2e7d32;
+}
+
+.alert-recepcion.error {
+  background-color: #fef5f5;
+  border-left-color: #f44336;
+  color: #c62828;
+}
+
+.alert-recepcion.info {
+  background-color: #f0f7ff;
+  border-left-color: #2196f3;
+  color: #1565c0;
+}

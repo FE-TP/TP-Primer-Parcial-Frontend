@@ -1,0 +1,269 @@
+<div class="page-container">
+  <!-- Encabezado del módulo -->
+  <div class="header-container">
+    <h1 class="page-title">Administración de Recepción</h1>
+    
+    <!-- Selector de fecha -->
+    <div class="input-group">
+      <label for="fecha" class="input-label">Fecha de consulta:</label>
+      <input 
+        type="date" 
+        id="fecha" 
+        [(ngModel)]="fechaSeleccionada" 
+        (change)="onFechaChange()"
+        class="form-input"
+      >
+    </div>
+  </div>
+
+  <!-- Tabla de turnos -->
+  <div class="table-container">
+    <h2 class="section-title">Turnos para {{ fechaSeleccionada | date:'dd/MM/yyyy' }}</h2>
+    
+    <div *ngIf="turnos.length > 0; else noTurnos">
+      <div class="table-wrapper">
+        <table class="table" role="table" aria-label="Lista de turnos">
+          <thead>
+            <tr role="row">
+              <!-- ENCABEZADOS SIN ICONOS según las reglas -->
+              <th scope="col">Turno #</th>
+              <th scope="col">Hora</th>
+              <th scope="col">Proveedor</th>
+              <th scope="col">Productos</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Jaula</th>
+              <th scope="col">Inicio</th>
+              <th scope="col">Fin</th>
+              <th scope="col" class="actions-column">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- FILAS CON ICONOS según las reglas -->
+            <tr *ngFor="let turno of turnos" class="table-row" role="row">
+              <td [attr.data-label]="'Turno #'">
+                <span class="status-chip">{{ turno.idTurno }}</span>
+              </td>
+              <td [attr.data-label]="'Hora'">
+                {{ turno.horaInicioAgendamiento }} - {{ turno.horaFinAgendamiento }}
+              </td>
+              <td [attr.data-label]="'Proveedor'">
+                <div class="d-flex align-items-center gap-sm">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 8C10.2091 8 12 6.20914 12 4C12 1.79086 10.2091 0 8 0C5.79086 0 4 1.79086 4 4C4 6.20914 5.79086 8 8 8Z" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M8 10C3.58172 10 0 13.5817 0 18H16C16 13.5817 12.4183 10 8 10Z" stroke="currentColor" stroke-width="1.5"/>
+                  </svg>
+                  {{ turno.proveedor?.nombre || 'N/A' }}
+                </div>
+              </td>
+              <td [attr.data-label]="'Productos'">
+                <div class="d-flex align-items-center gap-sm">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 3H14L13 10H3L2 3Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 3L1.5 1H0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  {{ getTotalProductos(turno.detalles) }} productos
+                </div>
+              </td>
+              <td [attr.data-label]="'Estado'">
+                <span class="status-chip" [ngClass]="getEstadoChipClass(turno.estado)">
+                  {{ turno.estado }}
+                </span>
+              </td>
+              <td [attr.data-label]="'Jaula'">
+                <div class="d-flex align-items-center gap-sm" *ngIf="turno.jaula">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 3H14C14.5523 3 15 3.44772 15 4V12C15 12.5523 14.5523 13 14 13H2C1.44772 13 1 12.5523 1 12V4C1 3.44772 1.44772 3 2 3Z" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M5 7H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  </svg>
+                  {{ turno.jaula.nombre }}
+                </div>
+                <span *ngIf="!turno.jaula">Sin asignar</span>
+              </td>
+              <td [attr.data-label]="'Inicio'">
+                {{ turno.horaInicioRecepcion || '-' }}
+              </td>
+              <td [attr.data-label]="'Fin'">
+                {{ turno.horaFinRecepcion || '-' }}
+              </td>
+              <td [attr.data-label]="'Acciones'" class="actions-column">
+                <div class="actions-container">
+                  <button 
+                    *ngIf="turno.estado === 'AGENDADO'"
+                    class="btn btn-primary btn-sm" 
+                    (click)="abrirModalJaula(turno)"
+                    [attr.aria-label]="'Iniciar recepción del turno ' + turno.idTurno">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Iniciar
+                  </button>
+                  <button 
+                    *ngIf="turno.estado === 'EN_RECEPCION'"
+                    class="btn btn-primary btn-sm" 
+                    (click)="finalizarRecepcion(turno)"
+                    [attr.aria-label]="'Finalizar recepción del turno ' + turno.idTurno">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Finalizar
+                  </button>
+                  <button 
+                    class="btn btn-secondary btn-sm" 
+                    (click)="verDetalles(turno)"
+                    [attr.aria-label]="'Ver detalles del turno ' + turno.idTurno">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/>
+                      <path d="M7 5V9M7 3H7.01" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                    </svg>
+                    Ver
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Información de tabla -->
+      <div class="text-center mt-lg">
+        <small class="text-tertiary">
+          Mostrando {{ turnos.length }} turno{{ turnos.length !== 1 ? 's' : '' }}
+        </small>
+      </div>
+    </div>
+
+    <!-- Estado vacío -->
+    <ng-template #noTurnos>
+      <div class="text-center mt-xl">
+        <h3 class="subsection-title">No hay turnos agendados</h3>
+        <p class="text-tertiary">No se encontraron turnos para la fecha seleccionada.</p>
+      </div>
+    </ng-template>
+  </div>
+</div>
+
+<!-- Modal para seleccionar jaula -->
+<div class="modal-backdrop" *ngIf="mostrarModalJaula" (click)="$event.target === $event.currentTarget && cerrarModalJaula()" 
+     role="dialog" aria-modal="true" aria-labelledby="modal-jaula-title" tabindex="-1">
+  <div class="modal-container" role="document">
+    <div class="modal-header">
+      <h2 id="modal-jaula-title" class="modal-title">Seleccionar Jaula</h2>
+      <button class="modal-close" type="button" (click)="cerrarModalJaula()" aria-label="Cerrar modal">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="form-container">
+        <div class="mb-lg">
+          <p class="input-label mb-md">Seleccione una jaula disponible:</p>
+          <div class="jaula-selector-grid">
+            <div 
+              *ngFor="let jaula of jaulasDisponibles" 
+              class="jaula-block"
+              [class.selected]="jaulaSeleccionada === jaula.idJaula"
+              [class.disabled]="jaula.enUso === 'S'"
+              (click)="jaula.enUso === 'N' && seleccionarJaula(jaula.idJaula)"
+              [attr.aria-label]="'Seleccionar ' + jaula.nombre">
+              
+              <div class="jaula-block-header">
+                <svg class="jaula-block-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 6H21C21.5523 6 22 6.44772 22 7V17C22 17.5523 21.5523 18 21 18H3C2.44772 18 2 17.5523 2 17V7C2 6.44772 2.44772 6 3 6Z" stroke="currentColor" stroke-width="2"/>
+                  <path d="M8 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M8 14H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <h4 class="jaula-block-title">{{ jaula.nombre }}</h4>
+              </div>
+              
+              <div class="jaula-block-footer">
+                <span class="jaula-status-badge" 
+                      [class.disponible]="jaula.enUso === 'N'"
+                      [class.en-uso]="jaula.enUso === 'S'">
+                  <span class="status-dot"></span>
+                  {{ jaula.enUso === 'N' ? 'Disponible' : 'En uso' }}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div *ngIf="jaulasDisponibles.length === 0" class="text-center mt-lg">
+            <p class="text-tertiary">No hay jaulas disponibles en este momento.</p>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="cerrarModalJaula()">
+            Cancelar
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-primary" 
+            (click)="iniciarRecepcion()" 
+            [disabled]="!jaulaSeleccionada">
+            Iniciar Recepción
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de detalles del turno -->
+<div class="modal-backdrop" *ngIf="mostrarDetalles" (click)="$event.target === $event.currentTarget && cerrarDetalles()" 
+     role="dialog" aria-modal="true" aria-labelledby="modal-detalles-title" tabindex="-1">
+  <div class="modal-container" role="document" style="max-width: 700px;">
+    <div class="modal-header">
+      <h2 id="modal-detalles-title" class="modal-title">Detalles del Turno #{{ turnoSeleccionado?.idTurno }}</h2>
+      <button class="modal-close" type="button" (click)="cerrarDetalles()" aria-label="Cerrar modal">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="modal-body" *ngIf="turnoSeleccionado">
+      <div class="form-grid two-columns mb-xl">
+        <div>
+          <strong>Proveedor:</strong><br>
+          {{ turnoSeleccionado.proveedor?.nombre }}
+        </div>
+        <div>
+          <strong>Estado:</strong><br>
+          <span class="status-chip" [ngClass]="getEstadoChipClass(turnoSeleccionado.estado)">
+            {{ turnoSeleccionado.estado }}
+          </span>
+        </div>
+        <div>
+          <strong>Hora agendada:</strong><br>
+          {{ turnoSeleccionado.horaInicioAgendamiento }} - {{ turnoSeleccionado.horaFinAgendamiento }}
+        </div>
+        <div>
+          <strong>Jaula asignada:</strong><br>
+          {{ turnoSeleccionado.jaula?.nombre || 'Sin asignar' }}
+        </div>
+      </div>
+
+      <h3 class="subsection-title">Productos a recibir</h3>
+      <div class="table-container">
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Producto</th>
+                <th scope="col">Cantidad</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let detalle of turnoSeleccionado.detalles">
+                <td>{{ detalle.producto?.nombre }}</td>
+                <td>{{ detalle.cantidad }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
