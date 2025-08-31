@@ -1,37 +1,54 @@
-# 🐳 Entorno con Docker Compose
 
-Este entorno levanta:
 
-* **Frontend** Angular (dev con `ng serve`)
-* **Backend** fake con `json-server` (`db.json`)
+# **Agendamiento de Atención a Proveedores** 
+Aplicación web en Angular, para la gestión de **reservas de turnos de recepción** y administración de **proveedores, productos y jaulas**.
 
----
+Trabajo Práctico correspondiente al **Primer Examen Parcial – Frontend 2025**. 
+## Integrantes
+- Fleitas Cáceres, Fernando David
+- Figueredo Rosa, Elias de Jesus
+- Paredes Pérez, Atilio Sebastián
+- Ramírez Dure, José Gabriel
+- Vargas Florentín, Lucas Jesús Elias
 
-Flujo:
-1. Levantar los contenedores luego de un pull: `docker compose up -d --build --force-recreate`
-2. Eliminar los contenedores `docker compose down`
-3. Levantar los contendedores normal: `docker compose up -d`
 
-Comandos:
+## Módulos entregados
+- Administración de proveedores 
+- Administración de productos
+- Administración de jaulas de recepción
+- Reserva de turnos de recepción
+- Modulo de ejecucion de recepción de productos
 
-* levantar
-  * `docker compose up -d`
-  * `docker compose up -d --build --force-recreate`
+## Requisitos
 
-* apagar
-  * `docker compose down`
+- Docker.
 
-* logs
-  * `docker compose logs -f`
-  * `docker compose logs -f frontend`
-  * `docker compose logs -f backend`
+## Instalación y ejecución
 
-* entrar en contenedor
-  * `docker compose exec frontend bash`
-  * `docker compose exec backend sh`
+Clonar el repositorio:
+```bash
+git clone https://github.com/FE-TP/TP-Primer-Parcial-Frontend.git
+```
+Ingresar al proyecto:
+```bash
+cd TP-Primer-Parcial-Frontend
+```
+Construir imágenes y levantar servicios:
+```bash
+docker compose up --build
+```
+Abrir la aplicación en el navegador:
+```bash
+http://localhost:4200
+```
 
-* limpiar
-  * `docker system prune`
-  * `docker image prune -a`
-  * `docker volume prune`
+## Comandos útiles
 
+Ver logs:
+```bash
+docker compose logs -f frontend
+```
+Detener y eliminar contenedor:
+```bash
+docker compose down -v
+```
