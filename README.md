@@ -6,7 +6,7 @@ Aplicación web en Angular, para la gestión de **reservas de turnos de recepci�
 Trabajo Práctico correspondiente al **Primer Examen Parcial – Frontend 2025**. 
 ## Integrantes
 - Fleitas Cáceres, Fernando David
-- Figueredo Rosa, Elias de Jesus
+- Figueredo Rosa, Elias Jesus
 - Paredes Pérez, Atilio Sebastián
 - Ramírez Dure, José Gabriel
 - Vargas Florentín, Lucas Jesús Elias
