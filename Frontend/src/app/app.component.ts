@@ -17,7 +17,8 @@ export class AppComponent {
     { path: '/jaulas', label: 'Jaulas', icon: '🏗️' },
     { path: '/productos', label: 'Productos', icon: '📦' },
     { path: '/proveedores', label: 'Proveedores', icon: '🏢' },
-    // Aquí agregarás los enlaces a los módulos de tus compañeros cuando los integren
-    // { path: '/reservas', label: 'Reservas', icon: '📅' }
+
+    // ⬇️ NUEVO: enlace al módulo
+    { path: '/reserva-turnos', label: 'Reserva de Turnos', icon: '📅' },
   ];
 }
