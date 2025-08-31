@@ -1,5 +1,5 @@
-// src/app/reserva-turnos/reserva-turnos.component.ts
-import { Component, signal } from '@angular/core';
+import { DataService } from '../data.service';
+import { Component, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormArray,
@@ -11,11 +11,7 @@ import {
   ValidationErrors,
   AbstractControl,
 } from '@angular/forms';
-
-// Ajustá la ruta según dónde tengas tus interfaces
 import { Turno, DetalleTurno, Proveedor, Producto } from '../interfaces';
-
-const AUTO_SEED_DEMO = true; // ← poné false para desactivar el seed por defecto
 
 type Hhmm = `${number}${number}:${number}${number}`;
 
@@ -53,7 +49,7 @@ export class ReservaTurnosComponent {
   // Slots del enunciado (07:00 … 18:00 cada 30’)
   readonly timeSlots = generateTimeSlots('07:00', '18:00', 30);
 
-  // Catálogos y estado (se cargan en el constructor luego del seedIfEmpty)
+  // Catálogos y estado (se cargan desde el servicio)
   proveedores = signal<Proveedor[]>([]);
   productos = signal<Producto[]>([]);
   turnos = signal<Turno[]>([]);
@@ -61,14 +57,18 @@ export class ReservaTurnosComponent {
   form: FormGroup;
   detallesFA: FormArray;
 
-  constructor(private fb: FormBuilder) {
-    // Seed demo si está vacío
-    this.seedIfEmpty();
+  constructor(private fb: FormBuilder, private dataService: DataService) {
+    // Cargar datos iniciales desde el servicio
+    this.proveedores.set(this.dataService.getProveedores());
+    this.productos.set(this.dataService.getProductos());
+    this.turnos.set(this.dataService.getTurnos());
 
-    // Cargar desde localStorage
-    this.proveedores.set(this.readLS<Proveedor[]>('proveedores') ?? []);
-    this.productos.set(this.readLS<Producto[]>('productos') ?? []);
-    this.turnos.set(this.readLS<Turno[]>('turnos') ?? []);
+    // Si querés que se actualicen automáticamente si cambian en el servicio:
+    effect(() => {
+      this.proveedores.set(this.dataService.getProveedores());
+      this.productos.set(this.dataService.getProductos());
+      this.turnos.set(this.dataService.getTurnos());
+    });
 
     // Form
     this.detallesFA = this.fb.array([], [this.minOneDetalle()]);
@@ -80,108 +80,8 @@ export class ReservaTurnosComponent {
       detalles: this.detallesFA,
     });
 
-    // Si por algún motivo no hay catálogos, poner placeholders mínimos
-    if (this.proveedores().length === 0) {
-      this.proveedores.set([{ idProveedor: 1, nombre: 'Proveedor de prueba' } as Proveedor]);
-    }
-    if (this.productos().length === 0) {
-      this.productos.set([
-        { idProducto: 1, nombre: 'Producto A' } as Producto,
-        { idProducto: 2, nombre: 'Producto B' } as Producto,
-      ]);
-    }
-
     // Arrancamos con 1 detalle
     this.addDetalle();
-  }
-
-  // ======= Storage helpers =======
-  private readLS<T>(key: string): T | null {
-    try {
-      return JSON.parse(localStorage.getItem(key) || 'null') as T | null;
-    } catch {
-      return null;
-    }
-  }
-  private writeLS<T>(key: string, value: T): void {
-    localStorage.setItem(key, JSON.stringify(value));
-  }
-
-  // ======= Seed demo =======
-  private seedIfEmpty(): void {
-    if (!AUTO_SEED_DEMO) return;
-
-    const hasAny =
-      !!localStorage.getItem('proveedores') ||
-      !!localStorage.getItem('productos') ||
-      !!localStorage.getItem('turnos');
-
-    if (hasAny) return;
-
-    const proveedores: Proveedor[] = [
-      { idProveedor: 1, nombre: 'AgroDistrib SA' } as any,
-      { idProveedor: 2, nombre: 'NutriCampo SRL' } as any,
-      { idProveedor: 3, nombre: 'LogiVet Paraguay' } as any,
-    ];
-
-    const productos: Producto[] = [
-      { idProducto: 1, nombre: 'Maíz quebrado' } as any,
-      { idProducto: 2, nombre: 'Balanceado 18%' } as any,
-      { idProducto: 3, nombre: 'Aserrín' } as any,
-      { idProducto: 4, nombre: 'Vacunas Aftosa' } as any,
-      { idProducto: 5, nombre: 'Sal mineralizada' } as any,
-    ];
-
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    const hoy = `${yyyy}-${mm}-${dd}`;
-
-    const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
-    const mm2 = String(tomorrow.getMonth() + 1).padStart(2, '0');
-    const dd2 = String(tomorrow.getDate()).padStart(2, '0');
-    const mañana = `${tomorrow.getFullYear()}-${mm2}-${dd2}`;
-
-    const turnos: Turno[] = [
-      {
-        idTurno: 1,
-        fecha: hoy,
-        horaInicioAgendamiento: '09:00',
-        horaFinAgendamiento: '09:30',
-        idProveedor: 1,
-        detalles: [
-          { idTurno: 1, idProducto: 1, cantidad: 50 },
-          { idTurno: 1, idProducto: 2, cantidad: 30 },
-        ],
-        estado: 'AGENDADO',
-      } as any,
-      {
-        idTurno: 2,
-        fecha: hoy,
-        horaInicioAgendamiento: '10:00',
-        horaFinAgendamiento: '10:30',
-        idProveedor: 2,
-        detalles: [{ idTurno: 2, idProducto: 3, cantidad: 10 }],
-        estado: 'AGENDADO',
-      } as any,
-      {
-        idTurno: 3,
-        fecha: mañana,
-        horaInicioAgendamiento: '07:30',
-        horaFinAgendamiento: '08:00',
-        idProveedor: 3,
-        detalles: [
-          { idTurno: 3, idProducto: 4, cantidad: 5 },
-          { idTurno: 3, idProducto: 5, cantidad: 12 },
-        ],
-        estado: 'AGENDADO',
-      } as any,
-    ];
-
-    this.writeLS('proveedores', proveedores);
-    this.writeLS('productos', productos);
-    this.writeLS('turnos', turnos);
   }
 
   // ======= Detalles helpers =======
@@ -256,14 +156,18 @@ export class ReservaTurnosComponent {
       estado: 'AGENDADO',
     } as any;
 
-    const updated = [...this.turnos(), nuevo].sort((a, b) => {
+    // Usar el servicio para agregar el turno
+    const turnosActuales = this.dataService.getTurnos();
+    const updated = [...turnosActuales, nuevo].sort((a, b) => {
       const ka = `${a.fecha} ${a.horaInicioAgendamiento}`;
       const kb = `${b.fecha} ${b.horaInicioAgendamiento}`;
       return ka.localeCompare(kb);
     });
+    // Actualizar en el servicio
+    (this.dataService as any).turnosSubject.next(updated); // Acceso directo para demo, idealmente crear un método addTurno()
 
+    // Refrescar señal local
     this.turnos.set(updated);
-    this.writeLS('turnos', updated);
 
     this.form.reset();
     this.detalles.clear();
@@ -272,9 +176,10 @@ export class ReservaTurnosComponent {
   }
 
   eliminarTurno(idTurno: number): void {
-    const filtered = this.turnos().filter((t) => t.idTurno !== idTurno);
+    const turnosActuales = this.dataService.getTurnos();
+    const filtered = turnosActuales.filter((t) => t.idTurno !== idTurno);
+    (this.dataService as any).turnosSubject.next(filtered); // Acceso directo para demo, idealmente crear un método deleteTurno()
     this.turnos.set(filtered);
-    this.writeLS('turnos', filtered);
   }
 
   nombreProveedor(id: number): string {
